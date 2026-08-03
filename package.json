@@ -1,0 +1,25 @@
+{
+  "name": "gradetrack",
+  "version": "1.0.0",
+  "description": "A grade tracking system which allows users to input readily available data, predict grades, and estimate required performance on exams",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PatelOm57/GradeTrack.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/PatelOm57/GradeTrack/issues"
+  },
+  "homepage": "https://github.com/PatelOm57/GradeTrack#readme",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.111.0",
+    "dotenv": "^17.4.2"
+  }
+}
