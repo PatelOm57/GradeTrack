@@ -7,16 +7,43 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [courseGroups, setCourseGroups] = useState([]);
   const [courses, setCourses] = useState([]);
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fetch real database records on mount
   useEffect(() => {
-    async function fetchDashboardData() {
+    async function initializeAndFetch() {
       try {
         setLoading(true);
+        setError(null);
 
-        // 1. Fetch Course Groups
+        // 1. Check current auth session
+        let { data: { session } } = await supabase.auth.getSession();
+
+        // 2. If no active session, perform automatic sign-in with test credentials
+        if (!session) {
+          const testEmail = process.env.NEXT_PUBLIC_TEST_EMAIL;
+          const testPassword = process.env.NEXT_PUBLIC_TEST_PASS;
+
+        // Replace this block inside initializeAndFetch in app/page.jsx:
+        if (!testEmail || !testPassword) {
+          throw new Error(
+            'Missing NEXT_PUBLIC_TEST_EMAIL or NEXT_PUBLIC_TEST_PASS in .env file'
+          );
+        }
+
+          const { data: authData, error: authErr } = await supabase.auth.signInWithPassword({
+            email: testEmail,
+            password: testPassword,
+          });
+
+          if (authErr) throw authErr;
+          session = authData.session;
+        }
+
+        setUser(session?.user || null);
+
+        // 3. Fetch Course Groups (Semesters) for this authenticated user
         const { data: groupsData, error: groupsErr } = await supabase
           .from('course_group')
           .select('*')
@@ -24,7 +51,7 @@ export default function Home() {
 
         if (groupsErr) throw groupsErr;
 
-        // 2. Fetch Courses
+        // 4. Fetch Courses for this authenticated user
         const { data: coursesData, error: coursesErr } = await supabase
           .from('courses')
           .select('*')
@@ -35,39 +62,48 @@ export default function Home() {
         setCourseGroups(groupsData || []);
         setCourses(coursesData || []);
       } catch (err) {
-        console.error('Error fetching dashboard data:', err.message);
+        console.error('Error initializing app:', err.message);
         setError(err.message);
       } finally {
         setLoading(false);
       }
     }
 
-    fetchDashboardData();
+    initializeAndFetch();
   }, []);
 
   return (
     <div>
       {/* Navigation Header */}
-      <nav className="bg-white border-b border-slate-200 px-8 py-4 flex space-x-4">
-        <button 
-          onClick={() => setActiveTab('dashboard')}
-          className={`px-4 py-2 rounded-lg font-semibold text-sm ${
-            activeTab === 'dashboard' ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-100'
-          }`}
-        >
-          Tab button
-        </button>
+      <nav className="bg-white border-b border-slate-200 px-8 py-4 flex justify-between items-center">
+        <div className="flex space-x-4">
+          <button 
+            onClick={() => setActiveTab('dashboard')}
+            className={`px-4 py-2 rounded-lg font-semibold text-sm ${
+              activeTab === 'dashboard' ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-100'
+            }`}
+          >
+            Dashboard View
+          </button>
+        </div>
+
+        {/* User Info Badge */}
+        {user && (
+          <div className="text-xs text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full border border-slate-200 font-mono">
+            Logged in as: <span className="font-semibold text-slate-700">{user.email}</span>
+          </div>
+        )}
       </nav>
 
       {/* Main Content Area */}
       <main className="p-8 max-w-7xl mx-auto">
         {loading ? (
           <div className="flex justify-center items-center h-64 text-slate-500 font-medium">
-            Loading your courses...
+            Signing in and loading your course data...
           </div>
         ) : error ? (
-          <div className="p-4 bg-red-50 text-red-700 rounded-lg border border-red-200">
-            Failed to load data: {error}
+          <div className="p-4 bg-red-50 text-red-700 rounded-lg border border-red-200 font-medium">
+            Authentication or Data Error: {error}
           </div>
         ) : (
           <Dashboard courseGroups={courseGroups} courses={courses} />
@@ -80,9 +116,11 @@ export default function Home() {
 function Dashboard({ courseGroups, courses }) {
   if (courseGroups.length === 0) {
     return (
-      <div className="text-center py-16 bg-white rounded-2xl border">
-        <h3 className="text-lg font-semibold text-slate-700">Semester</h3>
-        <p className="text-slate-500 text-sm mt-1">Text</p>
+      <div className="text-center py-16 bg-white rounded-2xl border border-dashed border-slate-300">
+        <h3 className="text-lg font-semibold text-slate-700">No semesters found</h3>
+        <p className="text-slate-500 text-sm mt-1">
+          Add a record to the `course_group` table in Supabase to display your semesters here.
+        </p>
       </div>
     );
   }
