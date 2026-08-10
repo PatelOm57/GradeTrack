@@ -2,14 +2,30 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/config/supabase';
+import { User } from '@supabase/supabase-js';
+
+export interface CourseGroup {
+  id: number;
+  name: string;
+}
+
+export interface Course {
+  id: number;
+  cgroup_id: number;
+  field: string;
+  level: string;
+  target: number;
+  currentGrade?: number | null;
+  completedWeight?: number | null;
+}
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState('dashboard');
-  const [courseGroups, setCourseGroups] = useState([]);
-  const [courses, setCourses] = useState([]);
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'editor'>('dashboard');
+  const [courseGroups, setCourseGroups] = useState<CourseGroup[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function initializeAndFetch() {
@@ -17,20 +33,17 @@ export default function Home() {
         setLoading(true);
         setError(null);
 
-        // 1. Check current auth session
         let { data: { session } } = await supabase.auth.getSession();
 
-        // 2. If no active session, perform automatic sign-in with test credentials
         if (!session) {
           const testEmail = process.env.NEXT_PUBLIC_TEST_EMAIL;
           const testPassword = process.env.NEXT_PUBLIC_TEST_PASS;
 
-        // Replace this block inside initializeAndFetch in app/page.jsx:
-        if (!testEmail || !testPassword) {
-          throw new Error(
-            'Missing NEXT_PUBLIC_TEST_EMAIL or NEXT_PUBLIC_TEST_PASS in .env file'
-          );
-        }
+          if (!testEmail || !testPassword) {
+            throw new Error(
+              'Missing NEXT_PUBLIC_TEST_EMAIL or NEXT_PUBLIC_TEST_PASS in .env file'
+            );
+          }
 
           const { data: authData, error: authErr } = await supabase.auth.signInWithPassword({
             email: testEmail,
@@ -43,7 +56,6 @@ export default function Home() {
 
         setUser(session?.user || null);
 
-        // 3. Fetch Course Groups (Semesters) for this authenticated user
         const { data: groupsData, error: groupsErr } = await supabase
           .from('course_group')
           .select('*')
@@ -51,7 +63,6 @@ export default function Home() {
 
         if (groupsErr) throw groupsErr;
 
-        // 4. Fetch Courses for this authenticated user
         const { data: coursesData, error: coursesErr } = await supabase
           .from('courses')
           .select('*')
@@ -61,9 +72,10 @@ export default function Home() {
 
         setCourseGroups(groupsData || []);
         setCourses(coursesData || []);
-      } catch (err) {
-        console.error('Error initializing app:', err.message);
-        setError(err.message);
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
+        console.error('Error initializing app:', errorMessage);
+        setError(errorMessage);
       } finally {
         setLoading(false);
       }
@@ -74,7 +86,6 @@ export default function Home() {
 
   return (
     <div>
-      {/* Navigation Header */}
       <nav className="bg-white border-b border-slate-200 px-8 py-4 flex justify-between items-center">
         <div className="flex space-x-4">
           <button 
@@ -87,7 +98,6 @@ export default function Home() {
           </button>
         </div>
 
-        {/* User Info Badge */}
         {user && (
           <div className="text-xs text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full border border-slate-200 font-mono">
             Logged in as: <span className="font-semibold text-slate-700">{user.email}</span>
@@ -95,7 +105,6 @@ export default function Home() {
         )}
       </nav>
 
-      {/* Main Content Area */}
       <main className="p-8 max-w-7xl mx-auto">
         {loading ? (
           <div className="flex justify-center items-center h-64 text-slate-500 font-medium">
@@ -113,7 +122,7 @@ export default function Home() {
   );
 }
 
-function Dashboard({ courseGroups, courses }) {
+function Dashboard({ courseGroups, courses }: { courseGroups: CourseGroup[]; courses: Course[] }) {
   if (courseGroups.length === 0) {
     return (
       <div className="text-center py-16 bg-white rounded-2xl border border-dashed border-slate-300">
@@ -135,7 +144,7 @@ function Dashboard({ courseGroups, courses }) {
   );
 }
 
-function CourseGroupOutline({ group, courses }) {
+function CourseGroupOutline({ group, courses }: { group: CourseGroup; courses: Course[] }) {
   const groupCourses = courses.filter(c => c.cgroup_id === group.id);
 
   return (
@@ -160,7 +169,7 @@ function CourseGroupOutline({ group, courses }) {
   );
 }
 
-function CourseSquareWidget({ course }) {
+function CourseSquareWidget({ course }: { course: Course }) {
   return (
     <div className="w-64 h-64 bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex flex-col justify-between hover:shadow-md transition-shadow cursor-pointer">
       <div>
