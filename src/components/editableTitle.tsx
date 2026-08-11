@@ -1,4 +1,4 @@
-// src/components/EditableTitle.tsx
+// src/components/editableTitle.tsx
 'use client';
 
 import React, { useState } from 'react';
@@ -14,7 +14,7 @@ interface EditableTitleProps {
   titleTip?: string;
 }
 
-/** Helper parser to extract course field and level */
+/** Parser to extract field and level */
 export function parseCourseTitle(raw: string): { field: string; level: string } | null {
   const trimmed = raw.trim();
   // Regex matches 1+ non-digits at start, optional spaces, and 1+ digits at end
