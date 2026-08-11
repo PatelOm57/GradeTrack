@@ -1,36 +1,32 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# GradeTrack
 
-## Getting Started
+Welcome to GradeTrack, a simple and easy way to manage your grades.
 
-First, run the development server:
+Designed by a college student, for college students, GradeTrack helps track course grades, calculate exact weighted averages, and predict future exam scenarios to prioritize study time effectively.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Motivation
+I created GradeTrack because I was tired of using Desmos to try to calculate my current grade in any number of my college courses. Estimating your grade shouldn't be a complicated process, so why not go all out and get the exact grade?
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+I wanted a system in which users could do everything they would need in order to not only know their grade, but also predict what they would need on an exam. College is difficult enough without having to try your best in every class during exam seasons, so why should you? Estimating how well you need to do allows you to prioritize the classes you need a grade boost in while also relaxing a bit in the classes where you can afford a small hit.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Features
+- **Semester Organization:** Group courses by term/semester for a modular overview of academics past and present.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Course Modules:** View current grades, target percentages, and progress directly from the dashboard.
 
-## Learn More
+- **Weighted Grade Calculation:** Eliminate guessing by calculating exact grades using assignment group weights.
 
-To learn more about Next.js, take a look at the following resources:
+- **Target Grade Modeling:** Predict the exact scores you need on upcoming finals or assignments to reach your desired final letter grade.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **Direct Course Access:** Dedicated detail views for every course so you can manage individual grade breakdowns seamlessly.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **Local/Cloud Storage:** Automatic saving either to the Supabase cloud or locally allows you to manage how you want to save your information.
 
-## Deploy on Vercel
+  - Note: Local storage is the default, cloud storage via Supabase will require an access key to enable and will not be implemented for the general public.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- **Cross-device Access (Cloud only):** No need to recreate everything if you left it on your laptop and wanted to make a quick guess on the go. Sync to Supabase lets you login and access the same data anywhere.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Features to look forward to
+- **Universal Cloud Storage:** Implementing connection to Google Drive so users can maintain cloud connectivity with a simple Google sign-in.
+
+- **Timing and Graphing:** Optional feature to see grade over time with timestamped assignments (not very useful in my opinion but nevertheless fun).
