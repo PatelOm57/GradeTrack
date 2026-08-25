@@ -6,6 +6,7 @@ import { supabase } from '@/lib/config/supabase';
 import { EditableTitle } from '@/components/editableTitle';
 import { GradeGroup, GradeGroupType } from '@/components/gradeGroup';
 import { GradeCard, GradeItem } from '@/components/gradeCard';
+import { ModeIndicator } from '@/components/modeIndicator';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -191,6 +192,9 @@ export default function CourseDetailPage({ params }: PageProps) {
       <Link href="/" className="text-blue-600 hover:underline text-sm inline-block">
         ← Back to Dashboard
       </Link>
+
+      {/* Mode Switch */}
+      <ModeIndicator />
 
       {/* Header Bar */}
       <header className="border p-6 rounded-xl bg-white shadow-sm flex items-center justify-between">
