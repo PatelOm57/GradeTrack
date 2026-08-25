@@ -1,4 +1,3 @@
-// src/components/editableTitle.tsx
 'use client';
 
 import React, { useState } from 'react';
