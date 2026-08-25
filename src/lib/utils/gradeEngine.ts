@@ -1,4 +1,22 @@
-export function getAssignmentPercentage(grade) {
+import { GradeItem } from '@/components/gradeCard';
+import { GradeGroupType } from '@/components/gradeGroup';
+
+export interface GroupSummary {
+  id: number;
+  name: string;
+  weight: number;
+  subgrade: number | null;
+  isCompleted: boolean;
+}
+
+export interface CourseGradeResult {
+  currentGrade: number | null;
+  completedWeight: number;
+  remainingWeight: number;
+  groupSummaries: GroupSummary[];
+}
+
+export function getAssignmentPercentage(grade: GradeItem | null | undefined): number | null {
   if (!grade) return null;
 
   if (grade.is_points) {
@@ -14,12 +32,15 @@ export function getAssignmentPercentage(grade) {
   return grade.percent !== null && grade.percent !== undefined ? Number(grade.percent) : null;
 }
 
-export function calculateGroupScore(group, grades) {
+export function calculateGroupScore(
+  group: GradeGroupType & { is_pure_points?: boolean },
+  grades: GradeItem[]
+): number | null {
   if (!grades || grades.length === 0) return null;
 
   if (group.is_pure_points) {
     const validPointGrades = grades.filter(
-      g => g.points !== null && g.points !== undefined && g.points_of
+      (g) => g.points !== null && g.points !== undefined && g.points_of
     );
     if (validPointGrades.length === 0) return null;
 
@@ -30,8 +51,8 @@ export function calculateGroupScore(group, grades) {
   }
 
   const validPercentages = grades
-    .map(g => getAssignmentPercentage(g))
-    .filter(val => val !== null);
+    .map((g) => getAssignmentPercentage(g))
+    .filter((val): val is number => val !== null);
 
   if (validPercentages.length === 0) return null;
 
@@ -39,11 +60,14 @@ export function calculateGroupScore(group, grades) {
   return sum / validPercentages.length;
 }
 
-export function calculateCourseGrade(gradeGroups = [], gradesByGroupId = {}) {
+export function calculateCourseGrade(
+  gradeGroups: (GradeGroupType & { is_pure_points?: boolean })[] = [],
+  gradesByGroupId: Record<number, GradeItem[]> = {}
+): CourseGradeResult {
   let weightedPointsEarned = 0;
   let totalCompletedWeight = 0;
 
-  const groupSummaries = gradeGroups.map(group => {
+  const groupSummaries: GroupSummary[] = gradeGroups.map((group) => {
     const groupWeight = Number(group.weight) || 0;
     const groupGrades = gradesByGroupId[group.id] || [];
     const subgrade = calculateGroupScore(group, groupGrades);
@@ -59,14 +83,13 @@ export function calculateCourseGrade(gradeGroups = [], gradesByGroupId = {}) {
     return { id: group.id, name: group.name, weight: groupWeight, subgrade: null, isCompleted: false };
   });
 
-  const currentGrade = totalCompletedWeight > 0 
-    ? (weightedPointsEarned / totalCompletedWeight) * 100 
-    : null;
+  const currentGrade =
+    totalCompletedWeight > 0 ? (weightedPointsEarned / totalCompletedWeight) * 100 : null;
 
   return {
     currentGrade,
     completedWeight: totalCompletedWeight,
     remainingWeight: Math.max(0, 100 - totalCompletedWeight),
-    groupSummaries
+    groupSummaries,
   };
 }
