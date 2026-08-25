@@ -1,4 +1,3 @@
-// src/components/gradeCard.tsx
 'use client';
 
 import React, { useState } from 'react';

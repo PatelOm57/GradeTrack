@@ -1,4 +1,3 @@
-// src/app/course/[id]/page.tsx
 'use client';
 
 import React, { use, useState, useEffect } from 'react';

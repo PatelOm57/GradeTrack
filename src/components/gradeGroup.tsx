@@ -1,4 +1,3 @@
-// src/components/gradeGroup.tsx
 'use client';
 
 import React from 'react';
@@ -26,7 +25,6 @@ export function GradeGroup({
   onDeleteGrade,
   onAddGrade,
 }: GradeGroupProps) {
-  // Calculate category average
   const groupAverage = React.useMemo(() => {
     let totalEarnedPoints = 0;
     let totalPossiblePoints = 0;
@@ -67,7 +65,7 @@ export function GradeGroup({
           </span>
         </div>
 
-        {/* Group Stats & Add Button */}
+        {/* Group Stats */}
         <div className="flex items-center gap-4">
           <span className="text-sm font-semibold text-slate-600">
             Avg:{' '}
