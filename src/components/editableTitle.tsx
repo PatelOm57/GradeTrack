@@ -31,7 +31,7 @@ export function EditableTitle({
   onSave,
   mode = 'course',
   onSaveGroup,
-  className = 'text-2xl font-bold',
+  className = 'gt-editable-title-default',
   titleTip = 'Click to rename',
 }: EditableTitleProps) {
   const [isEditing, setIsEditing] = useState(false);
@@ -77,7 +77,7 @@ export function EditableTitle({
 
   if (isEditing) {
     return (
-      <div className="inline-flex flex-col">
+      <div className="gt-editable-input-container">
         <input
           type="text"
           value={value}
@@ -88,12 +88,12 @@ export function EditableTitle({
           onBlur={handleSave}
           onKeyDown={handleKeyDown}
           autoFocus
-          className={`${className} border-2 ${
-            hasError ? 'border-red-500 bg-red-50' : 'border-blue-500 bg-white'
-          } px-2 py-0.5 rounded-lg text-slate-800 outline-none shadow-sm transition-colors`}
+          className={`${className} gt-editable-input ${
+            hasError ? 'gt-editable-input-error' : ''
+          }`}
         />
         {hasError && (
-          <span className="text-xs text-red-500 mt-1 font-normal">
+          <span className="gt-editable-error-msg">
             {mode === 'course'
               ? 'Must start with letters and end with numbers (e.g. CS 210)'
               : 'Name cannot be empty'}
@@ -104,10 +104,10 @@ export function EditableTitle({
   }
 
   return (
-    <div className="inline-block">
+    <div className="gt-editable-title-container">
       <h2
         onClick={() => setIsEditing(true)}
-        className={`${className} text-slate-800 hover:text-slate-400 cursor-pointer border border-transparent hover:border-slate-300 px-2 py-1 rounded-lg transition-all inline-flex items-center gap-2 group`}
+        className={`${className} gt-editable-title-display group`}
         title={titleTip}
       >
         <span>{value}</span>
@@ -116,7 +116,7 @@ export function EditableTitle({
           alt="Edit"
           width={20}
           height={20}
-          className="w-5 h-5 opacity-0 group-hover:opacity-100 transition-opacity"
+          className="gt-editable-icon"
         />
       </h2>
     </div>

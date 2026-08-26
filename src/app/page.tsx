@@ -84,18 +84,18 @@ export default function Home() {
     await supabase.from('courses').update({ field, level }).eq('id', id);
   };
 
-  if (loading) return <div className="p-8">Loading...</div>;
-  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
+  if (loading) return <div className="gt-loading-state">Loading...</div>;
+  if (error) return <div className="gt-error-state">Error: {error}</div>;
 
   return (
-    <main className="p-8 max-w-6xl mx-auto space-y-8">
-      <h1 className="text-3xl font-bold">GradeTrack Dashboard</h1>
+    <main className="gt-dashboard-layout">
+      <h1 className="gt-dashboard-title">GradeTrack Dashboard</h1>
 
       {courseGroups.map((group) => {
         const groupCourses = courses.filter((c) => c.cgroup_id === group.id);
 
         return (
-          <section key={group.id} className="border p-6 rounded-xl space-y-4 bg-slate-50/50">
+          <section key={group.id} className="gt-semester-group">
             <EditableTitle
               initialValue={group.name}
               mode="group"
@@ -104,31 +104,27 @@ export default function Home() {
               titleTip="Click to rename semester"
             />
 
-            <div className="flex flex-wrap gap-4">
+            <div className="gt-course-grid">
               {groupCourses.map((course) => (
-                <div 
-                  key={course.id} 
-                  className="w-56 h-36 border p-4 rounded-lg bg-white hover:shadow-sm flex flex-col justify-between"
-                >
+                <div key={course.id} className="gt-course-card">
                   <div>
-                    {/* Unified Single Menu Course Title Edit */}
                     <EditableTitle
                       initialValue={`${course.field} ${course.level}`}
                       mode="course"
-                      className="text-lg font-bold"
+                      className="gt-course-card-title"
                       onSave={(field, level) => handleRenameCourse(course.id, field, level)}
                       titleTip="Click to rename course"
                     />
 
                     <div>
-                      <Link href={`/course/${course.id}`} className="text-xs text-slate-500 hover:underline">
+                      <Link href={`/course/${course.id}`} className="gt-course-target-link">
                         Target: {course.target}%
                       </Link>
                     </div>
                   </div>
 
                   <Link href={`/course/${course.id}`}>
-                    <div className="text-xl font-semibold text-blue-600">
+                    <div className="gt-course-grade-value">
                       {course.currentGrade ? `${course.currentGrade}%` : '---'}
                     </div>
                   </Link>

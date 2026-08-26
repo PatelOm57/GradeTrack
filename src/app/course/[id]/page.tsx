@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { supabase } from '@/lib/config/supabase';
 import { EditableTitle } from '@/components/editableTitle';
 import { GradeGroup, GradeGroupType } from '@/components/gradeGroup';
-import { GradeCard, GradeItem } from '@/components/gradeCard';
+import { GradeItem } from '@/components/gradeCard';
 import { ModeIndicator } from '@/components/modeIndicator';
 
 interface PageProps {
@@ -185,11 +185,11 @@ export default function CourseDetailPage({ params }: PageProps) {
 
   const overallGrade = calculateOverallGrade();
 
-  if (loading) return <div className="p-8">Loading course details...</div>;
+  if (loading) return <div className="gt-loading-state">Loading course details...</div>;
 
   return (
-    <main className="p-8 max-w-4xl mx-auto space-y-6">
-      <Link href="/" className="text-blue-600 hover:underline text-sm inline-block">
+    <main className="gt-course-detail-layout">
+      <Link href="/" className="gt-back-link">
         ← Back to Dashboard
       </Link>
 
@@ -197,28 +197,26 @@ export default function CourseDetailPage({ params }: PageProps) {
       <ModeIndicator />
 
       {/* Header Bar */}
-      <header className="border p-6 rounded-xl bg-white shadow-sm flex items-center justify-between">
+      <header className="gt-course-header">
         <EditableTitle
           initialValue={courseTitle}
           mode="course"
-          className="text-3xl font-bold"
+          className="gt-course-title-text"
           onSave={handleRenameCourse}
           titleTip="Click to rename course"
         />
 
         {/* Overall Grade Badge */}
-        <div className="text-right">
-          <div className="text-xs font-medium text-slate-400 uppercase tracking-wider">
-            Overall Grade
-          </div>
-          <div className="text-2xl font-bold text-blue-600">
+        <div className="gt-overall-grade-container">
+          <div className="gt-overall-grade-label">Overall Grade</div>
+          <div className="gt-overall-grade-value">
             {overallGrade !== null ? `${overallGrade}%` : '---'}
           </div>
         </div>
       </header>
 
       {/* Groups & Grades List */}
-      <div className="space-y-6">
+      <div className="gt-grade-groups-container">
         {gradeGroups.map((group) => (
           <GradeGroup
             key={group.id}

@@ -55,38 +55,30 @@ export function GradeGroup({
   }, [grades]);
 
   return (
-    <section className="border rounded-xl bg-white shadow-sm overflow-hidden transition-all">
-      {/* Group Header */}
-      <div className="flex items-center justify-between p-4 border-b bg-slate-50/60">
-        <div className="flex items-center gap-3">
-          <h3 className="font-bold text-slate-800 text-lg">{group.name}</h3>
-          <span className="text-xs font-semibold px-2 py-0.5 rounded bg-slate-200/70 text-slate-600">
-            {group.weight}% of grade
-          </span>
+    <section className="gt-group-card">
+      <div className="gt-group-header">
+        <div className="gt-group-title-wrapper">
+          <h3 className="gt-group-title">{group.name}</h3>
+          <span className="gt-group-weight-badge">{group.weight}% of grade</span>
         </div>
 
-        {/* Group Stats */}
-        <div className="flex items-center gap-4">
-          <span className="text-sm font-semibold text-slate-600">
+        <div className="gt-group-stats">
+          <span className="gt-group-avg-display">
             Avg:{' '}
-            <span className={groupAverage !== null ? 'text-blue-600 font-bold' : 'text-slate-400'}>
+            <span className={groupAverage !== null ? 'gt-avg-value' : 'gt-avg-empty'}>
               {groupAverage !== null ? `${groupAverage}%` : '—'}
             </span>
           </span>
 
           {onAddGrade && (
-            <button
-              onClick={() => onAddGrade(group.id)}
-              className="text-xs font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-2.5 py-1.5 rounded-lg transition-colors border border-blue-200"
-            >
+            <button onClick={() => onAddGrade(group.id)} className="gt-add-grade-btn">
               + Add Grade Item
             </button>
           )}
         </div>
       </div>
 
-      {/* Grades List */}
-      <div>
+      <div className="gt-group-items-list">
         {grades.length > 0 ? (
           grades.map((grade) => (
             <GradeCard
@@ -97,7 +89,7 @@ export function GradeGroup({
             />
           ))
         ) : (
-          <div className="p-4 text-center text-xs text-slate-400 italic">
+          <div className="gt-group-empty-state">
             No grade items added to this group yet.
           </div>
         )}
