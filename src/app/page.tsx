@@ -3,7 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/config/supabase';
+import { getStorageMode } from '@/lib/local/session';
+import { localStorageEngine } from '@/lib/local/storage';
 import { EditableTitle } from '@/components/editableTitle';
+import { ModeIndicator } from '@/components/modeIndicator';
 
 export interface CourseGroup {
   id: number;
@@ -30,36 +33,47 @@ export default function Home() {
     async function fetchData() {
       try {
         setLoading(true);
-        let { data: { session } } = await supabase.auth.getSession();
+        const mode = getStorageMode();
 
-        if (!session) {
-          const testEmail = process.env.NEXT_PUBLIC_TEST_EMAIL;
-          const testPassword = process.env.NEXT_PUBLIC_TEST_PASS;
+        if (mode === 'local') {
+          // Local Storage
+          const groupsData = localStorageEngine.getCourseGroups();
+          const coursesData = localStorageEngine.getCourses();
+          setCourseGroups(groupsData);
+          setCourses(coursesData);
+        } else {
+          // Supabase Cloud Storage
+          let { data: { session } } = await supabase.auth.getSession();
 
-          if (testEmail && testPassword) {
-            const { data: authData, error: authErr } = await supabase.auth.signInWithPassword({
-              email: testEmail,
-              password: testPassword,
-            });
-            if (authErr) throw authErr;
-            session = authData.session;
+          if (!session) {
+            const testEmail = process.env.NEXT_PUBLIC_TEST_EMAIL;
+            const testPassword = process.env.NEXT_PUBLIC_TEST_PASS;
+
+            if (testEmail && testPassword) {
+              const { data: authData, error: authErr } = await supabase.auth.signInWithPassword({
+                email: testEmail,
+                password: testPassword,
+              });
+              if (authErr) throw authErr;
+              session = authData.session;
+            }
           }
+
+          const { data: groupsData, error: groupsErr } = await supabase
+            .from('course_group')
+            .select('*')
+            .order('id', { ascending: true });
+          if (groupsErr) throw groupsErr;
+
+          const { data: coursesData, error: coursesErr } = await supabase
+            .from('courses')
+            .select('*')
+            .order('id', { ascending: true });
+          if (coursesErr) throw coursesErr;
+
+          setCourseGroups(groupsData || []);
+          setCourses(coursesData || []);
         }
-
-        const { data: groupsData, error: groupsErr } = await supabase
-          .from('course_group')
-          .select('*')
-          .order('id', { ascending: true });
-        if (groupsErr) throw groupsErr;
-
-        const { data: coursesData, error: coursesErr } = await supabase
-          .from('courses')
-          .select('*')
-          .order('id', { ascending: true });
-        if (coursesErr) throw coursesErr;
-
-        setCourseGroups(groupsData || []);
-        setCourses(coursesData || []);
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : 'Failed to fetch data');
       } finally {
@@ -72,16 +86,29 @@ export default function Home() {
 
   const handleRenameGroup = async (id: number, newName: string) => {
     setCourseGroups((prev) =>
-      prev.map((g) => (g.id === id ? { ...g, name: newName } : g))
+      prev.map((g) => (Number(g.id) === Number(id) ? { ...g, name: newName } : g))
     );
-    await supabase.from('course_group').update({ name: newName }).eq('id', id);
+    const mode = getStorageMode();
+
+    if (mode === 'local') {
+      localStorageEngine.updateCourseGroup(id, newName);
+    } else {
+      await supabase.from('course_group').update({ name: newName }).eq('id', id);
+    }
   };
 
+  // Rename course
   const handleRenameCourse = async (id: number, field: string, level: string) => {
     setCourses((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, field, level } : c))
+      prev.map((c) => (Number(c.id) === Number(id) ? { ...c, field, level } : c))
     );
-    await supabase.from('courses').update({ field, level }).eq('id', id);
+    const mode = getStorageMode();
+
+    if (mode === 'local') {
+      localStorageEngine.updateCourse(id, field, level);
+    } else {
+      await supabase.from('courses').update({ field, level }).eq('id', id);
+    }
   };
 
   if (loading) return <div className="p-8">Loading...</div>;
@@ -89,10 +116,14 @@ export default function Home() {
 
   return (
     <main className="p-8 max-w-6xl mx-auto space-y-8">
+      {/* Mode Switch */}
+      <ModeIndicator />
+
       <h1 className="text-3xl font-bold">GradeTrack Dashboard</h1>
 
       {courseGroups.map((group) => {
-        const groupCourses = courses.filter((c) => c.cgroup_id === group.id);
+        // Coerce types to explicit numbers to avoid string/number mismatch
+        const groupCourses = courses.filter((c) => Number(c.cgroup_id) === Number(group.id));
 
         return (
           <section key={group.id} className="border p-6 rounded-xl space-y-4 bg-slate-50/50">
@@ -111,7 +142,6 @@ export default function Home() {
                   className="w-56 h-36 border p-4 rounded-lg bg-white hover:shadow-sm flex flex-col justify-between"
                 >
                   <div>
-                    {/* Unified Single Menu Course Title Edit */}
                     <EditableTitle
                       initialValue={`${course.field} ${course.level}`}
                       mode="course"
@@ -134,6 +164,10 @@ export default function Home() {
                   </Link>
                 </div>
               ))}
+
+              {groupCourses.length === 0 && (
+                <div className="text-sm text-slate-400 italic">No courses in this group.</div>
+              )}
             </div>
           </section>
         );

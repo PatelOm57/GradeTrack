@@ -7,6 +7,8 @@ import { EditableTitle } from '@/components/editableTitle';
 import { GradeGroup, GradeGroupType } from '@/components/gradeGroup';
 import { GradeCard, GradeItem } from '@/components/gradeCard';
 import { ModeIndicator } from '@/components/modeIndicator';
+import { getStorageMode } from '@/lib/local/session';
+import { localStorageEngine } from '@/lib/local/storage';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -25,50 +27,66 @@ export default function CourseDetailPage({ params }: PageProps) {
     async function fetchData() {
       try {
         setLoading(true);
+        const mode = getStorageMode();
 
-        // 1. Fetch Course Title
-        const { data: courseData, error: courseErr } = await supabase
-          .from('courses')
-          .select('field, level')
-          .eq('id', courseId)
-          .single();
+        if (mode === 'local') {
+          // Local Storage Branch
+          const course = localStorageEngine.getCourseById(courseId);
+          if (course) {
+            setCourseTitle(`${course.field} ${course.level}`);
+          } else {
+            setCourseTitle('CS 101');
+          }
 
-        if (courseErr) {
-          console.error('Error fetching course:', courseErr.message);
-        }
-        if (courseData) {
-          setCourseTitle(`${courseData.field} ${courseData.level}`);
-        }
+          const groups = localStorageEngine.getGroupsByCourseId(courseId);
+          setGradeGroups(groups);
 
-        // 2. Fetch Grade Groups
-        const { data: groupData, error: groupErr } = await supabase
-          .from('grade_group')
-          .select('*')
-          .eq('course_id', courseId)
-          .order('id', { ascending: true });
+          const groupIds = groups.map((g) => g.id);
+          const localGrades = localStorageEngine.getGradesByGroupIds(groupIds);
+          setGrades(localGrades);
+        } else {
+          // Supabase Cloud Branch
+          const { data: courseData, error: courseErr } = await supabase
+            .from('courses')
+            .select('field, level')
+            .eq('id', courseId)
+            .single();
 
-        if (groupErr) {
-          console.error('Error fetching grade_group:', groupErr.message);
-        }
-        const fetchedGroups = groupData || [];
-        setGradeGroups(fetchedGroups);
+          if (courseErr) {
+            console.error('Error fetching course:', courseErr.message);
+          }
+          if (courseData) {
+            setCourseTitle(`${courseData.field} ${courseData.level}`);
+          }
 
-        // 3. Fetch Grades matching group IDs using ggroup_id
-        if (fetchedGroups.length > 0) {
-          const groupIds = fetchedGroups.map((g) => g.id);
-
-          const { data: gradesData, error: gradesErr } = await supabase
-            .from('grades')
+          const { data: groupData, error: groupErr } = await supabase
+            .from('grade_group')
             .select('*')
-            .in('ggroup_id', groupIds)
+            .eq('course_id', courseId)
             .order('id', { ascending: true });
 
-          if (gradesErr) {
-            console.error('Error fetching grades:', gradesErr.message);
+          if (groupErr) {
+            console.error('Error fetching grade_group:', groupErr.message);
           }
-          setGrades(gradesData || []);
-        } else {
-          setGrades([]);
+          const fetchedGroups = groupData || [];
+          setGradeGroups(fetchedGroups);
+
+          if (fetchedGroups.length > 0) {
+            const groupIds = fetchedGroups.map((g) => g.id);
+
+            const { data: gradesData, error: gradesErr } = await supabase
+              .from('grades')
+              .select('*')
+              .in('ggroup_id', groupIds)
+              .order('id', { ascending: true });
+
+            if (gradesErr) {
+              console.error('Error fetching grades:', gradesErr.message);
+            }
+            setGrades(gradesData || []);
+          } else {
+            setGrades([]);
+          }
         }
       } catch (err) {
         console.error('Unexpected error loading course details:', err);
@@ -80,13 +98,19 @@ export default function CourseDetailPage({ params }: PageProps) {
     if (courseId) fetchData();
   }, [courseId]);
 
-  // Handle renaming the course title
+  // Rename course title
   const handleRenameCourse = async (field: string, level: string) => {
     setCourseTitle(`${field} ${level}`);
-    await supabase.from('courses').update({ field, level }).eq('id', courseId);
+    const mode = getStorageMode();
+
+    if (mode === 'local') {
+      localStorageEngine.updateCourse(courseId, field, level);
+    } else {
+      await supabase.from('courses').update({ field, level }).eq('id', courseId);
+    }
   };
 
-  // Handle score updates from GradeCard
+  // Update grade score
   const handleUpdateScore = async (
     gradeId: number,
     newPoints: number | null,
@@ -98,43 +122,61 @@ export default function CourseDetailPage({ params }: PageProps) {
       )
     );
 
-    await supabase
-      .from('grades')
-      .update({ points: newPoints, percent: newPercent })
-      .eq('id', gradeId);
-  };
-
-  // Handle grade deletion
-  const handleDeleteGrade = async (gradeId: number) => {
-    setGrades((prev) => prev.filter((g) => g.id !== gradeId));
-    await supabase.from('grades').delete().eq('id', gradeId);
-  };
-
-  // Handle adding a new grade item to a group
-  const handleAddGrade = async (groupId: number) => {
-    const newGradePayload = {
-      ggroup_id: groupId,
-      name: 'New Item',
-      is_points: true,
-      points: null,
-      points_of: 10,
-      percent: null,
-      auto_percent: false,
-    };
-
-    const { data, error } = await supabase
-      .from('grades')
-      .insert([newGradePayload])
-      .select()
-      .single();
-
-    if (error) console.error('Error adding grade item:', error.message);
-    if (data && !error) {
-      setGrades((prev) => [...prev, data]);
+    const mode = getStorageMode();
+    if (mode === 'local') {
+      localStorageEngine.updateGradeScore(gradeId, newPoints, newPercent);
+    } else {
+      await supabase
+        .from('grades')
+        .update({ points: newPoints, percent: newPercent })
+        .eq('id', gradeId);
     }
   };
 
-  // Calculate Overall Course Grade across points & percent items
+  // Delete grade item
+  const handleDeleteGrade = async (gradeId: number) => {
+    setGrades((prev) => prev.filter((g) => g.id !== gradeId));
+
+    const mode = getStorageMode();
+    if (mode === 'local') {
+      localStorageEngine.deleteGrade(gradeId);
+    } else {
+      await supabase.from('grades').delete().eq('id', gradeId);
+    }
+  };
+
+  // Add grade item
+  const handleAddGrade = async (groupId: number) => {
+    const mode = getStorageMode();
+
+    if (mode === 'local') {
+      const newGrade = localStorageEngine.addGrade(groupId);
+      setGrades((prev) => [...prev, newGrade]);
+    } else {
+      const newGradePayload = {
+        ggroup_id: groupId,
+        name: 'New Item',
+        is_points: true,
+        points: null,
+        points_of: 10,
+        percent: null,
+        auto_percent: false,
+      };
+
+      const { data, error } = await supabase
+        .from('grades')
+        .insert([newGradePayload])
+        .select()
+        .single();
+
+      if (error) console.error('Error adding grade item:', error.message);
+      if (data && !error) {
+        setGrades((prev) => [...prev, data]);
+      }
+    }
+  };
+
+  // Calculate overall course grade
   const calculateOverallGrade = () => {
     let totalWeightedScore = 0;
     let totalWeightCompleted = 0;
