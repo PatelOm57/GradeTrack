@@ -104,7 +104,10 @@ export function EditableTitle({
   }
 
   return (
-    <div className="gt-editable-title-container">
+    <div 
+      className="gt-editable-title-container"
+      onClick={(e) => e.stopPropagation()} /* Prevents triggering card link */
+    >
       <h2
         onClick={() => setIsEditing(true)}
         className={`${className} gt-editable-title-display group`}

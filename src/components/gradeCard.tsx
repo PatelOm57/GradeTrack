@@ -106,7 +106,7 @@ export function GradeCard({ grade, onUpdateScore, onDelete }: GradeCardProps) {
 
         <button
           onClick={() => onDelete(grade.id)}
-          className="gt-grade-delete-btn"
+          className="gt-grade-delete-btn gt-pop-target"
           title="Delete grade item"
         >
           ✕

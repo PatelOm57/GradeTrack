@@ -106,29 +106,31 @@ export default function Home() {
 
             <div className="gt-course-grid">
               {groupCourses.map((course) => (
-                <div key={course.id} className="gt-course-card">
-                  <div>
-                    <EditableTitle
-                      initialValue={`${course.field} ${course.level}`}
-                      mode="course"
-                      className="gt-course-card-title"
-                      onSave={(field, level) => handleRenameCourse(course.id, field, level)}
-                      titleTip="Click to rename course"
-                    />
-
+                <Link 
+                  key={course.id} 
+                  href={`/course/${course.id}`} 
+                  className="gt-course-card-link"
+                >
+                  <div className="gt-course-card gt-pop-target">
                     <div>
-                      <Link href={`/course/${course.id}`} className="gt-course-target-link">
-                        Target: {course.target}%
-                      </Link>
-                    </div>
-                  </div>
+                      <EditableTitle
+                        initialValue={`${course.field} ${course.level}`}
+                        mode="course"
+                        className="gt-course-card-title"
+                        onSave={(field, level) => handleRenameCourse(course.id, field, level)}
+                        titleTip="Click to rename course"
+                      />
 
-                  <Link href={`/course/${course.id}`}>
+                      <div className="gt-course-target-link">
+                        Target: {course.target}%
+                      </div>
+                    </div>
+
                     <div className="gt-course-grade-value">
                       {course.currentGrade ? `${course.currentGrade}%` : '---'}
                     </div>
-                  </Link>
-                </div>
+                  </div>
+                </Link>
               ))}
             </div>
           </section>

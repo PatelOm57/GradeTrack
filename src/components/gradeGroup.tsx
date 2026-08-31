@@ -71,7 +71,10 @@ export function GradeGroup({
           </span>
 
           {onAddGrade && (
-            <button onClick={() => onAddGrade(group.id)} className="gt-add-grade-btn">
+            <button 
+              onClick={() => onAddGrade(group.id)} 
+              className="gt-add-grade-btn gt-pop-target"
+            >
               + Add Grade Item
             </button>
           )}

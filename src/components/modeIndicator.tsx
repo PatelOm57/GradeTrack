@@ -28,7 +28,11 @@ export function ModeIndicator() {
         </span>
       </div>
 
-      <button onClick={handleToggle} type="button" className="gt-mode-toggle-btn">
+      <button 
+        onClick={handleToggle} 
+        type="button" 
+        className="gt-mode-toggle-btn gt-pop-target"
+      >
         Switch to {mode === 'local' ? 'Cloud' : 'Local'}
       </button>
     </div>

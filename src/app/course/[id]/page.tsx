@@ -189,7 +189,7 @@ export default function CourseDetailPage({ params }: PageProps) {
 
   return (
     <main className="gt-course-detail-layout">
-      <Link href="/" className="gt-back-link">
+      <Link href="/" className="gt-back-link gt-pop-target">
         ← Back to Dashboard
       </Link>
 

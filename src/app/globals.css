@@ -2,7 +2,197 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  background-color: #ffffff; /* bg-slate-50 */
-  color: #313131; /* text-slate-800 */
+/* Base Reset & Dynamic Canvas Fallbacks */
+:root {
+  --course-accent: var(--color-primary, #64748b); /* Neutral fallback */
+  --header-tint-opacity: rgba(0, 0, 0, 0.15);
+  --layout-min-padding: 1.5rem;
 }
+
+body {
+  background-color: var(--bg-app, #f8fafc);
+  color: var(--text-main, #0f172a);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+/* ==========================================================================
+   Global Layout Containers & Header Navigation
+   ========================================================================== */
+
+/* Main outer page wrapper matching mockups */
+.gt-dashboard-title {
+  font-size: 2.8rem;
+  font-weight: 700;
+  text-align: center;
+  margin-top: 0.2rem;
+  margin-bottom: 1.5rem;
+  color: var(--text-main, #0f172a);
+}
+.gt-dashboard-layout,
+.gt-course-detail-layout {
+  max-width: 72rem;
+  margin-left: auto;
+  margin-right: auto;
+  padding: max(var(--layout-min-padding), 2rem) var(--layout-min-padding);
+}
+
+/* Base Header Bar */
+.gt-course-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem;
+  border-radius: var(--border-radius, 0.75rem);
+  background-color: var(--course-accent);
+  overflow: hidden;
+  border: 1px solid var(--border-color, #e2e8f0);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* Translucent Dark Layer Overlay for Header Tinting */
+.gt-course-header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-color: var(--header-tint-opacity);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Keep header text above the dark overlay */
+.gt-course-header > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* ================
+   Section Dividers
+   ================ */
+
+/* Divider spacing preserving moderate separation with side whitespace */
+.gt-semester-group {
+  margin-bottom: 2.5rem;
+  position: relative;
+}
+
+.gt-group-card {
+  padding-bottom: 1.5rem;
+  margin-bottom: 2rem;
+  position: relative;
+}
+
+.gt-semester-group:not(:last-child)::after {
+  content: '';
+  display: block;
+  width: 80%;
+  height: 2px;
+  background-color: var(--border-color, #000000);
+  margin: 2.5rem auto 0 auto;
+}
+
+.gt-group-card:not(:last-child)::after {
+  content: '';
+  display: block;
+  height: 2px;
+  background-color: var(--border-color, #000000); /* Solid line per mockup */
+  margin-top: 2rem;
+  margin-left: 1.5rem;  /* Preserves specified whitespace on left */
+  margin-right: 1.5rem; /* Preserves specified whitespace on right */
+}
+
+/* ===============================
+   Grids & Horizontal Rail Systems
+   =============================== */
+
+/* Dashboard Grid: Non-overflowing wrap for courses */
+.gt-course-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.gt-pop-target {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), 
+              background-color 0.2s ease, 
+              box-shadow 0.2s ease;
+  will-change: transform;
+  pointer-events: auto;
+}
+
+.gt-pop-target:hover {
+  transform: scale(1.05) translateY(-2px);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
+}
+
+.gt-pop-target:active {
+  transform: scale(0.98) translateY(0px); /* Tactile press effect */
+}
+
+/* Base Card Styling */
+.gt-course-card-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+.gt-course-card {
+  width: 14rem;
+  height: 9rem;
+  padding: 1rem;
+  border: 2px solid var(--border-color, #000000);
+  border-radius: var(--border-radius, 0.5rem);
+  background-color: var(--bg-card, #ffffff);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  cursor: pointer;
+}
+
+.gt-course-card-link:hover .gt-course-card {
+  background-color: var(--bg-card-hover, #f1f5f9);
+}
+
+/* Interactive Title Container Flicker Prevention */
+.gt-editable-title-container {
+  pointer-events: auto;
+}
+
+/* Course Page Rail: Horizontally scrollable assignment cards */
+.gt-group-items-list {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  padding: 0.5rem 0.25rem 1rem 0.25rem;
+  scroll-snap-type: x mandatory;
+}
+
+.gt-grade-card {
+  flex: 0 0 14rem; /* Fixed width rail items */
+  height: 9rem;
+  padding: 1rem;
+  border: 2px solid var(--border-color, #000000);
+  border-radius: var(--border-radius, 0.5rem);
+  background-color: var(--bg-card, #ffffff);
+  scroll-snap-align: start;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* Utilities */
+.gt-back-link {
+  display: inline-block;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+  color: var(--text-muted, #64748b);
+  text-decoration: none;
+}
+
+.gt-back-link:hover {
+  text-decoration: underline;
+}
+
