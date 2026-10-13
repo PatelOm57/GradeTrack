@@ -1,3 +1,4 @@
+// src/components/editableTitle.tsx
 'use client';
 
 import React, { useState } from 'react';
@@ -5,123 +6,79 @@ import Image from 'next/image';
 
 interface EditableTitleProps {
   initialValue: string;
-  onSave: (field: string, level: string) => void;
-  /** Optional mode: 'course' enforces [Text][Number]. 'group' allows any single text block. */
-  mode?: 'course' | 'group';
-  onSaveGroup?: (value: string) => void;
+  mode: 'course' | 'group';
   className?: string;
+  onSave?: (field: string, level: string) => void;
+  onSaveGroup?: (newName: string) => void;
   titleTip?: string;
-}
-
-/** Parser to extract field and level */
-export function parseCourseTitle(raw: string): { field: string; level: string } | null {
-  const trimmed = raw.trim();
-  // Regex matches 1+ non-digits at start, optional spaces, and 1+ digits at end
-  const match = trimmed.match(/^([A-Za-z\s-]+?)\s*(\d+)$/);
-  if (!match) return null;
-
-  return {
-    field: match[1].trim(),
-    level: match[2].trim(),
-  };
 }
 
 export function EditableTitle({
   initialValue,
+  mode,
+  className = '',
   onSave,
-  mode = 'course',
   onSaveGroup,
-  className = 'gt-editable-title-default',
-  titleTip = 'Click to rename',
+  titleTip = 'Edit title',
 }: EditableTitleProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [value, setValue] = useState(initialValue);
-  const [hasError, setHasError] = useState(false);
 
-  const handleSave = () => {
-    const trimmed = value.trim();
-
-    if (mode === 'course') {
-      const parsed = parseCourseTitle(trimmed);
-      if (!parsed) {
-        setHasError(true);
-        return; // Don't close or save if format is invalid
-      }
-      setHasError(false);
-      setIsEditing(false);
-      if (trimmed !== initialValue) {
-        onSave(parsed.field, parsed.level);
-      }
-    } else {
-      // Group mode (allows any name, e.g., "Fall 2026")
-      if (trimmed === '') {
-        setHasError(true);
-        return;
-      }
-      setHasError(false);
-      setIsEditing(false);
-      if (trimmed !== initialValue && onSaveGroup) {
-        onSaveGroup(trimmed);
-      }
-    }
+  const handleEditClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setIsEditing(true);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') handleSave();
-    if (e.key === 'Escape') {
-      setValue(initialValue);
-      setHasError(false);
-      setIsEditing(false);
+  const handleBlurOrSubmit = () => {
+    setIsEditing(false);
+    if (mode === 'course' && onSave) {
+      const parts = value.trim().split(' ');
+      const field = parts[0] || 'UNKN';
+      const level = parts.slice(1).join(' ') || '100';
+      onSave(field, level);
+    } else if (mode === 'group' && onSaveGroup) {
+      onSaveGroup(value.trim());
     }
   };
 
   if (isEditing) {
     return (
-      <div className="gt-editable-input-container">
+      <div 
+        className="gt-editable-title-container w-full" 
+        onClick={(e) => e.stopPropagation()}
+      >
         <input
           type="text"
           value={value}
-          onChange={(e) => {
-            setValue(e.target.value);
-            if (hasError) setHasError(false);
-          }}
-          onBlur={handleSave}
-          onKeyDown={handleKeyDown}
+          onChange={(e) => setValue(e.target.value)}
+          onBlur={handleBlurOrSubmit}
+          onKeyDown={(e) => e.key === 'Enter' && handleBlurOrSubmit()}
           autoFocus
-          className={`${className} gt-editable-input ${
-            hasError ? 'gt-editable-input-error' : ''
-          }`}
+          className={`gt-editable-title-input ${className}`}
         />
-        {hasError && (
-          <span className="gt-editable-error-msg">
-            {mode === 'course'
-              ? 'Must start with letters and end with numbers (e.g. CS 210)'
-              : 'Name cannot be empty'}
-          </span>
-        )}
       </div>
     );
   }
 
   return (
-    <div 
-      className="gt-editable-title-container"
-      onClick={(e) => e.stopPropagation()} /* Prevents triggering card link */
-    >
-      <h2
-        onClick={() => setIsEditing(true)}
-        className={`${className} gt-editable-title-display group`}
+    <div className="gt-editable-title-container">
+      <span className={className}>{initialValue}</span>
+
+      {/* Slide-out Edit Button */}
+      <button
+        type="button"
+        onClick={handleEditClick}
+        className="gt-edit-popout-btn gt-pop-target"
         title={titleTip}
       >
-        <span>{value}</span>
         <Image
           src="/edit-icon.svg"
           alt="Edit"
-          width={20}
-          height={20}
-          className="gt-editable-icon"
+          width={12}
+          height={12}
         />
-      </h2>
+      </button>
     </div>
   );
 }

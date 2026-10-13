@@ -1,9 +1,11 @@
+// src/app/page.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/config/supabase';
 import { EditableTitle } from '@/components/editableTitle';
+import { LoadingScreen } from '@/components/loadingScreen';
 
 export interface CourseGroup {
   id: number;
@@ -84,7 +86,7 @@ export default function Home() {
     await supabase.from('courses').update({ field, level }).eq('id', id);
   };
 
-  if (loading) return <div className="gt-loading-state">Loading...</div>;
+  if (loading) return <LoadingScreen message="Loading your dashboard..." variant="skeleton" />;
   if (error) return <div className="gt-error-state">Error: {error}</div>;
 
   return (
@@ -99,9 +101,10 @@ export default function Home() {
             <EditableTitle
               initialValue={group.name}
               mode="group"
+              className="gt-group-title-text"
               onSave={() => {}}
               onSaveGroup={(newName) => handleRenameGroup(group.id, newName)}
-              titleTip="Click to rename semester"
+              titleTip="Edit semester name"
             />
 
             <div className="gt-course-grid">
@@ -118,7 +121,7 @@ export default function Home() {
                         mode="course"
                         className="gt-course-card-title"
                         onSave={(field, level) => handleRenameCourse(course.id, field, level)}
-                        titleTip="Click to rename course"
+                        titleTip="Edit course title"
                       />
 
                       <div className="gt-course-target-link">

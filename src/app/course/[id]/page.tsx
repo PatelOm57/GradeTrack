@@ -6,7 +6,7 @@ import { supabase } from '@/lib/config/supabase';
 import { EditableTitle } from '@/components/editableTitle';
 import { GradeGroup, GradeGroupType } from '@/components/gradeGroup';
 import { GradeItem } from '@/components/gradeCard';
-import { ModeIndicator } from '@/components/modeIndicator';
+import { LoadingScreen } from '@/components/loadingScreen';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -185,16 +185,13 @@ export default function CourseDetailPage({ params }: PageProps) {
 
   const overallGrade = calculateOverallGrade();
 
-  if (loading) return <div className="gt-loading-state">Loading course details...</div>;
+  if (loading) return <LoadingScreen message="Loading course details..." variant="spinner" />;
 
   return (
     <main className="gt-course-detail-layout">
       <Link href="/" className="gt-back-link gt-pop-target">
         ← Back to Dashboard
       </Link>
-
-      {/* Mode Switch */}
-      <ModeIndicator />
 
       {/* Header Bar */}
       <header className="gt-course-header">

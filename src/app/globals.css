@@ -156,11 +156,6 @@ body {
   background-color: var(--bg-card-hover, #f1f5f9);
 }
 
-/* Interactive Title Container Flicker Prevention */
-.gt-editable-title-container {
-  pointer-events: auto;
-}
-
 /* Course Page Rail: Horizontally scrollable assignment cards */
 .gt-group-items-list {
   display: flex;
@@ -196,3 +191,159 @@ body {
   text-decoration: underline;
 }
 
+/* Full-page loading container */
+.gt-loading-screen {
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  color: var(--text-muted, #64748b);
+}
+
+/* Spinner ring animation */
+.gt-spinner {
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 3px solid #e2e8f0;
+  border-top-color: var(--border-color, #000000);
+  border-radius: 50%;
+  animation: gt-spin 0.8s linear infinite;
+}
+
+@keyframes gt-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Skeleton Loading Pulse effect */
+.gt-skeleton-container {
+  max-width: 72rem;
+  margin: 2rem auto;
+  padding: 0 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.gt-skeleton-bar {
+  height: 2.5rem;
+  width: 40%;
+  background: #e2e8f0;
+  border-radius: 0.5rem;
+  animation: gt-pulse 1.5s infinite ease-in-out;
+}
+
+.gt-skeleton-grid {
+  display: flex;
+  gap: 1rem;
+}
+
+.gt-skeleton-card {
+  width: 14rem;
+  height: 9rem;
+  border-radius: 0.5rem;
+  background: #e2e8f0;
+  animation: gt-pulse 1.5s infinite ease-in-out;
+}
+
+@keyframes gt-pulse {
+  0%, 100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 0.2;
+  }
+}
+
+/* Container wrapper */
+.gt-editable-title-container {
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+  max-width: 100%;
+  pointer-events: auto;
+}
+
+/* Edit Pop-Out Button: Hidden behind text initially */
+.gt-edit-popout-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  background-color: #ffffff;
+  border: 2px solid var(--border-color, #000000);
+  border-radius: 0.375rem;
+  cursor: pointer;
+  margin-left: 0.5rem;
+  
+  /* Initial state: Slid behind the text (translated left and zero opacity) */
+  opacity: 0;
+  transform: translateX(-1rem) scale(0.8);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), 
+              opacity 0.2s ease, 
+              background-color 0.15s ease;
+  pointer-events: none;
+  z-index: 0; /* Sits behind or beside text */
+}
+
+/* Hover State: Slide out to full position */
+.gt-editable-title-container:hover .gt-edit-popout-btn {
+  opacity: 1;
+  transform: translateX(0) scale(1);
+  pointer-events: auto;
+}
+
+/* Hover on the popout button itself */
+.gt-edit-popout-btn:hover {
+  background-color: #f1f5f9;
+  transform: translateX(0) scale(1.1) translateY(-1px);
+}
+
+.gt-editable-title-container > span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.gt-editable-title-input {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
+  background: #ffffff;
+  border: 2px solid var(--border-color, #000000);
+  border-radius: 0.375rem;
+  padding: 0.1rem 0.4rem;
+  outline: none;
+}
+
+/* Semester / Course Group Title (Larger & Bold) */
+.gt-group-title-text {
+  font-size: 1.65rem;
+  font-weight: 800;
+  color: var(--text-primary, #0f172a);
+  letter-spacing: -0.02em;
+}
+
+/* Course Card Title (Bold & Medium-Large) */
+.gt-course-card-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-primary, #1e293b);
+  letter-spacing: -0.01em;
+}
+
+/* Course Detail Page Main Header Title */
+.gt-course-main-title {
+  font-size: 2.25rem;
+  font-weight: 900;
+  color: var(--text-primary, #0f172a);
+  letter-spacing: -0.025em;
+}
