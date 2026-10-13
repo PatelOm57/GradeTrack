@@ -4,7 +4,7 @@
 
 /* Base Reset & Dynamic Canvas Fallbacks */
 :root {
-  --course-accent: var(--color-primary, #64748b); /* Neutral fallback */
+  --course-accent: var(--color-primary, #64748b);
   --header-tint-opacity: rgba(0, 0, 0, 0.15);
   --layout-min-padding: 1.5rem;
 }
@@ -21,7 +21,6 @@ body {
    Global Layout Containers & Header Navigation
    ========================================================================== */
 
-/* Main outer page wrapper matching mockups */
 .gt-dashboard-title {
   font-size: 2.8rem;
   font-weight: 700;
@@ -30,6 +29,7 @@ body {
   margin-bottom: 1.5rem;
   color: var(--text-main, #0f172a);
 }
+
 .gt-dashboard-layout,
 .gt-course-detail-layout {
   max-width: 72rem;
@@ -38,76 +38,325 @@ body {
   padding: max(var(--layout-min-padding), 2rem) var(--layout-min-padding);
 }
 
-/* Base Header Bar */
+/* Top Navigation Bar */
+.gt-course-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.gt-nav-status {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-muted, #64748b);
+}
+
+/* Light Grey Header Bar with Black Border */
 .gt-course-header {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1.5rem;
-  border-radius: var(--border-radius, 0.75rem);
-  background-color: var(--course-accent);
-  overflow: hidden;
-  border: 1px solid var(--border-color, #e2e8f0);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  padding: 1.5rem 2rem;
+  border-radius: var(--border-radius, 0.5rem);
+  background-color: var(--bg-card-hover, #f1f5f9);
+  border: 2px solid var(--border-color, #000000);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  margin-bottom: 1.25rem;
 }
 
-/* Translucent Dark Layer Overlay for Header Tinting */
-.gt-course-header::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-color: var(--header-tint-opacity);
-  pointer-events: none;
-  z-index: 1;
-}
-
-/* Keep header text above the dark overlay */
 .gt-course-header > * {
   position: relative;
   z-index: 2;
 }
 
-/* ================
-   Section Dividers
-   ================ */
+/* Main Course Title (Regular / Medium Weight) */
+.gt-course-main-title {
+  font-size: 2rem;
+  font-weight: 500;
+  color: var(--text-main, #0f172a);
+  letter-spacing: -0.01em;
+}
 
-/* Divider spacing preserving moderate separation with side whitespace */
+/* Overall Grade Container */
+.gt-overall-grade-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.gt-overall-grade-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted, #64748b);
+}
+
+.gt-overall-grade-value {
+  font-size: 2rem;
+  font-weight: 900;
+  color: var(--text-main, #0f172a);
+}
+
+/* Sub-Header Actions & Totals Row (Under Header Block) */
+.gt-course-actions-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+}
+
+.gt-add-group-btn {
+  background-color: #ffffff;
+  border: 2px solid var(--border-color, #000000);
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.gt-add-group-btn:hover {
+  background-color: #f1f5f9;
+}
+
+/* Total Weight Badge & Tooltip Wrapper */
+.gt-weight-total-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.gt-weight-total-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.85rem;
+  border: 2px solid #000000;
+  border-radius: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 800;
+  cursor: help;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+/* Color Status Variations */
+.gt-weight-under {
+  background-color: #fef9c3; /* Soft Yellow */
+  color: #854d0e;
+  border-color: #ca8a04;
+}
+
+.gt-weight-exact {
+  background-color: #dcfce7; /* Soft Green */
+  color: #166534;
+  border-color: #16a34a;
+}
+
+.gt-weight-over {
+  background-color: #fee2e2; /* Soft Red */
+  color: #991b1b;
+  border-color: #dc2626;
+}
+
+/* Floating Tooltip Window */
+.gt-tooltip {
+  position: absolute;
+  top: 125%;
+  right: 0;
+  width: 16rem;
+  background-color: #0f172a;
+  color: #ffffff;
+  border: 2px solid #000000;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
+  z-index: 40;
+  
+  /* Initial state */
+  opacity: 0;
+  transform: translateY(-4px) scale(0.95);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  pointer-events: none;
+}
+
+.gt-weight-total-wrapper:hover .gt-tooltip {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.gt-tooltip-title {
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid #334155;
+  padding-bottom: 0.25rem;
+}
+
+.gt-tooltip-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+}
+
+.gt-tooltip-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.gt-tooltip-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+}
+
+.gt-dot-yellow { background-color: #eab308; }
+.gt-dot-green { background-color: #22c55e; }
+.gt-dot-red { background-color: #ef4444; }
+
+/* ==========================================================================
+   Section Dividers & Grade Group Cards
+   ========================================================================== */
+
 .gt-semester-group {
   margin-bottom: 2.5rem;
   position: relative;
 }
 
 .gt-group-card {
-  padding-bottom: 1.5rem;
+  padding: 1.25rem 1.5rem 1.5rem 1.5rem;
   margin-bottom: 2rem;
+  border: 2px solid var(--border-color, #000000);
+  border-radius: 0.75rem;
+  background-color: #ffffff;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
   position: relative;
 }
 
-.gt-semester-group:not(:last-child)::after {
-  content: '';
-  display: block;
-  width: 80%;
-  height: 2px;
-  background-color: var(--border-color, #000000);
-  margin: 2.5rem auto 0 auto;
+.gt-group-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
 }
 
-.gt-group-card:not(:last-child)::after {
-  content: '';
-  display: block;
-  height: 2px;
-  background-color: var(--border-color, #000000); /* Solid line per mockup */
-  margin-top: 2rem;
-  margin-left: 1.5rem;  /* Preserves specified whitespace on left */
-  margin-right: 1.5rem; /* Preserves specified whitespace on right */
+.gt-group-meta-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
-/* ===============================
+.gt-group-title-row {
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+}
+
+.gt-group-title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  margin: 0;
+  color: var(--text-main, #0f172a);
+}
+
+.gt-group-popout-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-left: 0.5rem;
+  opacity: 0;
+  transform: translateX(-0.75rem) scale(0.85);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), 
+              opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.gt-group-title-row:hover .gt-group-popout-actions {
+  opacity: 1;
+  transform: translateX(0) scale(1);
+  pointer-events: auto;
+}
+
+.gt-popout-btn-small {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  background-color: #ffffff;
+  border: 2px solid var(--border-color, #000000);
+  border-radius: 0.375rem;
+  font-size: 0.85rem;
+  font-weight: bold;
+  cursor: pointer;
+  color: #0f172a;
+}
+
+.gt-popout-btn-small:hover {
+  background-color: #f1f5f9;
+  transform: scale(1.1) translateY(-1px);
+}
+
+.gt-popout-btn-delete {
+  color: #ef4444;
+}
+
+.gt-popout-btn-delete:hover {
+  background-color: #fef2f2;
+  border-color: #dc2626;
+  color: #dc2626;
+}
+
+.gt-group-weight-row {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted, #64748b);
+  position: relative;
+}
+
+.gt-weight-input {
+  width: 4rem;
+  border: 2px solid #000000;
+  border-radius: 0.25rem;
+  padding: 0.1rem 0.3rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  outline: none;
+}
+
+.gt-group-stats {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.gt-group-avg-display {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-muted, #64748b);
+}
+
+.gt-avg-value {
+  color: var(--text-main, #0f172a);
+  font-weight: 800;
+}
+
+/* ==========================================================================
    Grids & Horizontal Rail Systems
-   =============================== */
+   ========================================================================== */
 
-/* Dashboard Grid: Non-overflowing wrap for courses */
 .gt-course-grid {
   display: flex;
   flex-wrap: wrap;
@@ -129,10 +378,9 @@ body {
 }
 
 .gt-pop-target:active {
-  transform: scale(0.98) translateY(0px); /* Tactile press effect */
+  transform: scale(0.98) translateY(0px);
 }
 
-/* Base Card Styling */
 .gt-course-card-link {
   text-decoration: none;
   color: inherit;
@@ -156,17 +404,16 @@ body {
   background-color: var(--bg-card-hover, #f1f5f9);
 }
 
-/* Course Page Rail: Horizontally scrollable assignment cards */
 .gt-group-items-list {
   display: flex;
   gap: 1rem;
   overflow-x: auto;
-  padding: 0.5rem 0.25rem 1rem 0.25rem;
+  padding: 0.5rem 0.25rem 0.5rem 0.25rem;
   scroll-snap-type: x mandatory;
 }
 
 .gt-grade-card {
-  flex: 0 0 14rem; /* Fixed width rail items */
+  flex: 0 0 14rem;
   height: 9rem;
   padding: 1rem;
   border: 2px solid var(--border-color, #000000);
@@ -178,10 +425,19 @@ body {
   justify-content: space-between;
 }
 
-/* Utilities */
+.gt-group-empty-state {
+  font-size: 0.875rem;
+  color: var(--text-muted, #64748b);
+  padding: 1rem 0;
+  font-style: italic;
+}
+
+/* ==========================================================================
+   Utilities & Modals
+   ========================================================================== */
+
 .gt-back-link {
   display: inline-block;
-  margin-bottom: 1rem;
   font-size: 0.875rem;
   color: var(--text-muted, #64748b);
   text-decoration: none;
@@ -191,74 +447,90 @@ body {
   text-decoration: underline;
 }
 
-/* Full-page loading container */
-.gt-loading-screen {
-  min-height: 60vh;
+.gt-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(2px);
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1rem;
-  color: var(--text-muted, #64748b);
+  z-index: 50;
 }
 
-/* Spinner ring animation */
-.gt-spinner {
-  width: 2.5rem;
-  height: 2.5rem;
-  border: 3px solid #e2e8f0;
-  border-top-color: var(--border-color, #000000);
-  border-radius: 50%;
-  animation: gt-spin 0.8s linear infinite;
-}
-
-@keyframes gt-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* Skeleton Loading Pulse effect */
-.gt-skeleton-container {
-  max-width: 72rem;
-  margin: 2rem auto;
-  padding: 0 1.5rem;
+.gt-modal-card {
+  background-color: #ffffff;
+  border: 2px solid var(--border-color, #000000);
+  border-radius: 0.75rem;
+  padding: 1.75rem;
+  max-width: 26rem;
+  width: 90%;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-}
-
-.gt-skeleton-bar {
-  height: 2.5rem;
-  width: 40%;
-  background: #e2e8f0;
-  border-radius: 0.5rem;
-  animation: gt-pulse 1.5s infinite ease-in-out;
-}
-
-.gt-skeleton-grid {
-  display: flex;
   gap: 1rem;
 }
 
-.gt-skeleton-card {
-  width: 14rem;
-  height: 9rem;
-  border-radius: 0.5rem;
-  background: #e2e8f0;
-  animation: gt-pulse 1.5s infinite ease-in-out;
+.gt-modal-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #0f172a;
 }
 
-@keyframes gt-pulse {
-  0%, 100% {
-    opacity: 0.6;
-  }
-  50% {
-    opacity: 0.2;
-  }
+.gt-modal-text {
+  font-size: 0.9rem;
+  color: #475569;
+  line-height: 1.4;
 }
 
-/* Container wrapper */
+.gt-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.gt-btn-cancel {
+  background-color: #ffffff;
+  border: 2px solid #cbd5e1;
+  border-radius: 0.375rem;
+  padding: 0.4rem 0.85rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.gt-btn-cancel:hover {
+  background-color: #f1f5f9;
+}
+
+.gt-btn-delete {
+  background-color: #ef4444;
+  color: #ffffff;
+  border: 2px solid #b91c1c;
+  border-radius: 0.375rem;
+  padding: 0.4rem 0.85rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.gt-btn-delete:hover {
+  background-color: #dc2626;
+}
+
+.gt-btn-primary {
+  background-color: #0f172a;
+  color: #ffffff;
+  border: 2px solid #000000;
+  border-radius: 0.375rem;
+  padding: 0.4rem 0.85rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* Title Input Constraints */
 .gt-editable-title-container {
   display: inline-flex;
   align-items: center;
@@ -267,7 +539,6 @@ body {
   pointer-events: auto;
 }
 
-/* Edit Pop-Out Button: Hidden behind text initially */
 .gt-edit-popout-btn {
   display: inline-flex;
   align-items: center;
@@ -279,25 +550,20 @@ body {
   border-radius: 0.375rem;
   cursor: pointer;
   margin-left: 0.5rem;
-  
-  /* Initial state: Slid behind the text (translated left and zero opacity) */
   opacity: 0;
   transform: translateX(-1rem) scale(0.8);
   transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), 
               opacity 0.2s ease, 
               background-color 0.15s ease;
   pointer-events: none;
-  z-index: 0; /* Sits behind or beside text */
 }
 
-/* Hover State: Slide out to full position */
 .gt-editable-title-container:hover .gt-edit-popout-btn {
   opacity: 1;
   transform: translateX(0) scale(1);
   pointer-events: auto;
 }
 
-/* Hover on the popout button itself */
 .gt-edit-popout-btn:hover {
   background-color: #f1f5f9;
   transform: translateX(0) scale(1.1) translateY(-1px);
@@ -324,26 +590,26 @@ body {
   outline: none;
 }
 
-/* Semester / Course Group Title (Larger & Bold) */
-.gt-group-title-text {
-  font-size: 1.65rem;
+/* Floating Bottom-Right "+ Add Grade" Button */
+.gt-floating-add-btn {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #0f172a;
+  color: #ffffff;
+  border: 2px solid #000000;
+  border-radius: 2rem;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.95rem;
   font-weight: 800;
-  color: var(--text-primary, #0f172a);
-  letter-spacing: -0.02em;
+  cursor: pointer;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.25);
+  z-index: 30;
 }
 
-/* Course Card Title (Bold & Medium-Large) */
-.gt-course-card-title {
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: var(--text-primary, #1e293b);
-  letter-spacing: -0.01em;
-}
-
-/* Course Detail Page Main Header Title */
-.gt-course-main-title {
-  font-size: 2.25rem;
-  font-weight: 900;
-  color: var(--text-primary, #0f172a);
-  letter-spacing: -0.025em;
+.gt-floating-add-btn:hover {
+  background-color: #1e293b;
 }

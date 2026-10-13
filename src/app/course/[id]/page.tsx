@@ -21,39 +21,35 @@ export default function CourseDetailPage({ params }: PageProps) {
   const [grades, setGrades] = useState<GradeItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
+  // New Group Modal State
+  const [showAddGroupModal, setShowAddGroupModal] = useState(false);
+  const [newGroupName, setNewGroupName] = useState('');
+  const [newGroupWeight, setNewGroupWeight] = useState('10');
+
   useEffect(() => {
     async function fetchData() {
       try {
         setLoading(true);
 
-        // 1. Fetch Course Title
         const { data: courseData, error: courseErr } = await supabase
           .from('courses')
           .select('field, level')
           .eq('id', courseId)
           .single();
 
-        if (courseErr) {
-          console.error('Error fetching course:', courseErr.message);
-        }
-        if (courseData) {
-          setCourseTitle(`${courseData.field} ${courseData.level}`);
-        }
+        if (courseErr) console.error('Error fetching course:', courseErr.message);
+        if (courseData) setCourseTitle(`${courseData.field} ${courseData.level}`);
 
-        // 2. Fetch Grade Groups
         const { data: groupData, error: groupErr } = await supabase
           .from('grade_group')
           .select('*')
           .eq('course_id', courseId)
           .order('id', { ascending: true });
 
-        if (groupErr) {
-          console.error('Error fetching grade_group:', groupErr.message);
-        }
+        if (groupErr) console.error('Error fetching grade_group:', groupErr.message);
         const fetchedGroups = groupData || [];
         setGradeGroups(fetchedGroups);
 
-        // 3. Fetch Grades matching group IDs using ggroup_id
         if (fetchedGroups.length > 0) {
           const groupIds = fetchedGroups.map((g) => g.id);
 
@@ -63,9 +59,7 @@ export default function CourseDetailPage({ params }: PageProps) {
             .in('ggroup_id', groupIds)
             .order('id', { ascending: true });
 
-          if (gradesErr) {
-            console.error('Error fetching grades:', gradesErr.message);
-          }
+          if (gradesErr) console.error('Error fetching grades:', gradesErr.message);
           setGrades(gradesData || []);
         } else {
           setGrades([]);
@@ -80,13 +74,11 @@ export default function CourseDetailPage({ params }: PageProps) {
     if (courseId) fetchData();
   }, [courseId]);
 
-  // Handle renaming the course title
   const handleRenameCourse = async (field: string, level: string) => {
     setCourseTitle(`${field} ${level}`);
     await supabase.from('courses').update({ field, level }).eq('id', courseId);
   };
 
-  // Handle score updates from GradeCard
   const handleUpdateScore = async (
     gradeId: number,
     newPoints: number | null,
@@ -104,37 +96,56 @@ export default function CourseDetailPage({ params }: PageProps) {
       .eq('id', gradeId);
   };
 
-  // Handle grade deletion
   const handleDeleteGrade = async (gradeId: number) => {
     setGrades((prev) => prev.filter((g) => g.id !== gradeId));
     await supabase.from('grades').delete().eq('id', gradeId);
   };
 
-  // Handle adding a new grade item to a group
-  const handleAddGrade = async (groupId: number) => {
-    const newGradePayload = {
-      ggroup_id: groupId,
-      name: 'New Item',
-      is_points: true,
-      points: null,
-      points_of: 10,
-      percent: null,
-      auto_percent: false,
+  const handleDeleteGroup = async (groupId: number) => {
+    setGradeGroups((prev) => prev.filter((g) => g.id !== groupId));
+    setGrades((prev) => prev.filter((g) => g.ggroup_id !== groupId));
+
+    await supabase.from('grades').delete().eq('ggroup_id', groupId);
+    await supabase.from('grade_group').delete().eq('id', groupId);
+  };
+
+  const handleUpdateGroup = async (groupId: number, newName: string, newWeight: number) => {
+    setGradeGroups((prev) =>
+      prev.map((g) => (g.id === groupId ? { ...g, name: newName, weight: newWeight } : g))
+    );
+
+    await supabase
+      .from('grade_group')
+      .update({ name: newName, weight: newWeight })
+      .eq('id', groupId);
+  };
+
+  const handleCreateGroup = async () => {
+    if (!newGroupName.trim()) return;
+    const weightNum = parseFloat(newGroupWeight) || 0;
+
+    const payload = {
+      course_id: courseId,
+      name: newGroupName.trim(),
+      weight: weightNum,
     };
 
     const { data, error } = await supabase
-      .from('grades')
-      .insert([newGradePayload])
+      .from('grade_group')
+      .insert([payload])
       .select()
       .single();
 
-    if (error) console.error('Error adding grade item:', error.message);
-    if (data && !error) {
-      setGrades((prev) => [...prev, data]);
+    if (error) {
+      console.error('Error creating grade group:', error.message);
+    } else if (data) {
+      setGradeGroups((prev) => [...prev, data]);
+      setNewGroupName('');
+      setNewGroupWeight('10');
+      setShowAddGroupModal(false);
     }
   };
 
-  // Calculate Overall Course Grade across points & percent items
   const calculateOverallGrade = () => {
     let totalWeightedScore = 0;
     let totalWeightCompleted = 0;
@@ -185,25 +196,37 @@ export default function CourseDetailPage({ params }: PageProps) {
 
   const overallGrade = calculateOverallGrade();
 
+  // Calculate Total Weight across all grade groups
+  const totalGroupWeight = gradeGroups.reduce((acc, g) => acc + (g.weight || 0), 0);
+
+  const getWeightStatusClass = () => {
+    if (totalGroupWeight < 100) return 'gt-weight-under';
+    if (totalGroupWeight === 100) return 'gt-weight-exact';
+    return 'gt-weight-over';
+  };
+
   if (loading) return <LoadingScreen message="Loading course details..." variant="spinner" />;
 
   return (
     <main className="gt-course-detail-layout">
-      <Link href="/" className="gt-back-link gt-pop-target">
-        ← Back to Dashboard
-      </Link>
+      {/* Standard Navigation */}
+      <nav className="gt-course-nav">
+        <Link href="/" className="gt-back-link gt-pop-target">
+          ← Back to Dashboard
+        </Link>
+        <div className="gt-nav-status">Connected to Supabase</div>
+      </nav>
 
-      {/* Header Bar */}
+      {/* Course Header Bar */}
       <header className="gt-course-header">
         <EditableTitle
           initialValue={courseTitle}
           mode="course"
-          className="gt-course-title-text"
+          className="gt-course-main-title"
           onSave={handleRenameCourse}
-          titleTip="Click to rename course"
+          titleTip="Edit course title"
         />
 
-        {/* Overall Grade Badge */}
         <div className="gt-overall-grade-container">
           <div className="gt-overall-grade-label">Overall Grade</div>
           <div className="gt-overall-grade-value">
@@ -212,7 +235,46 @@ export default function CourseDetailPage({ params }: PageProps) {
         </div>
       </header>
 
-      {/* Groups & Grades List */}
+      {/* Sub-Header Actions Row (Under Header Block) */}
+      <div className="gt-course-actions-bar">
+        {/* Left Side: Add Grade Group */}
+        <button
+          type="button"
+          onClick={() => setShowAddGroupModal(true)}
+          className="gt-add-group-btn gt-pop-target"
+        >
+          + Add Grade Group
+        </button>
+
+        {/* Right Side: Group Weight Percentage Total Indicator */}
+        <div className="gt-weight-total-wrapper">
+          <div className={`gt-weight-total-badge ${getWeightStatusClass()}`}>
+            <span>Group Percentage Totals:</span>
+            <span>{totalGroupWeight}%</span>
+          </div>
+
+          {/* Hover Tooltip */}
+          <div className="gt-tooltip">
+            <div className="gt-tooltip-title">Weight Allocation Rules</div>
+            <div className="gt-tooltip-list">
+              <div className="gt-tooltip-item">
+                <span className="gt-tooltip-dot gt-dot-yellow" />
+                <span><strong>Yellow (&lt; 100%):</strong> Incomplete total weight.</span>
+              </div>
+              <div className="gt-tooltip-item">
+                <span className="gt-tooltip-dot gt-dot-green" />
+                <span><strong>Green (= 100%):</strong> Correct weights across groups.</span>
+              </div>
+              <div className="gt-tooltip-item">
+                <span className="gt-tooltip-dot gt-dot-red" />
+                <span><strong>Red (&gt; 100%):</strong> Total exceeds 100%.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Grade Groups Container */}
       <div className="gt-grade-groups-container">
         {gradeGroups.map((group) => (
           <GradeGroup
@@ -221,10 +283,58 @@ export default function CourseDetailPage({ params }: PageProps) {
             grades={grades.filter((g) => g.ggroup_id === group.id)}
             onUpdateScore={handleUpdateScore}
             onDeleteGrade={handleDeleteGrade}
-            onAddGrade={handleAddGrade}
+            onDeleteGroup={handleDeleteGroup}
+            onUpdateGroup={handleUpdateGroup}
           />
         ))}
       </div>
+
+      {/* Add Grade Group Modal */}
+      {showAddGroupModal && (
+        <div className="gt-modal-overlay" onClick={() => setShowAddGroupModal(false)}>
+          <div className="gt-modal-card" onClick={(e) => e.stopPropagation()}>
+            <h4 className="gt-modal-title">Create Grade Group</h4>
+            
+            <div className="flex flex-col gap-3">
+              <label className="text-xs font-bold uppercase text-slate-500">Group Name</label>
+              <input
+                type="text"
+                placeholder="e.g. Quizzes, Midterms, Assignments"
+                value={newGroupName}
+                onChange={(e) => setNewGroupName(e.target.value)}
+                autoFocus
+                className="gt-editable-title-input"
+              />
+
+              <label className="text-xs font-bold uppercase text-slate-500">Weight (%)</label>
+              <input
+                type="number"
+                placeholder="10"
+                value={newGroupWeight}
+                onChange={(e) => setNewGroupWeight(e.target.value)}
+                className="gt-editable-title-input"
+              />
+            </div>
+
+            <div className="gt-modal-actions">
+              <button
+                type="button"
+                onClick={() => setShowAddGroupModal(false)}
+                className="gt-btn-cancel gt-pop-target"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleCreateGroup}
+                className="gt-btn-primary gt-pop-target"
+              >
+                Create Group
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
