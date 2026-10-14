@@ -56,6 +56,7 @@ export default function Home() {
       try {
         setLoading(true);
         const demoParam = searchParams.get('demo') === 'true';
+        let currentUserId: string | null = null;
 
         if (!demoParam) {
           const { data: { session } } = await supabase.auth.getSession();
@@ -63,22 +64,28 @@ export default function Home() {
             router.push('/login');
             return;
           }
+          currentUserId = session.user.id;
+        } else {
+          currentUserId = '00000000-0000-0000-0000-000000000000';
         }
 
         setIsDemo(demoParam);
 
-        let groupsQuery = supabase.from('course_group').select('*').order('id', { ascending: true });
-        let coursesQuery = supabase.from('courses').select('*').order('id', { ascending: true });
+        // Strictly filter both queries by the active user ID (or demo UUID)
+        const { data: groupsData, error: groupsErr } = await supabase
+          .from('course_group')
+          .select('*')
+          .eq('user_id', currentUserId)
+          .order('id', { ascending: true });
 
-        if (demoParam) {
-          groupsQuery = groupsQuery.eq('user_id', '00000000-0000-0000-0000-000000000000');
-          coursesQuery = coursesQuery.eq('user_id', '00000000-0000-0000-0000-000000000000');
-        }
-
-        const { data: groupsData, error: groupsErr } = await groupsQuery;
         if (groupsErr) throw groupsErr;
 
-        const { data: coursesData, error: coursesErr } = await coursesQuery;
+        const { data: coursesData, error: coursesErr } = await supabase
+          .from('courses')
+          .select('*')
+          .eq('user_id', currentUserId)
+          .order('id', { ascending: true });
+
         if (coursesErr) throw coursesErr;
 
         setCourseGroups(groupsData || []);
