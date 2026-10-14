@@ -883,14 +883,11 @@ body {
   outline: none;
 }
 
-/* ==========================================================================
-   Portal Note Tooltip System (Floating over document body)
-   ========================================================================== */
-
+/* Portal Note Tooltip System */
 .gt-portal-note-tooltip {
   position: absolute;
   transform: translateX(-50%);
-  max-width: 20rem; /* ~4.5 grade item lengths */
+  max-width: 20rem;
   min-width: 8rem;
   width: max-content;
   background-color: #0f172a;
@@ -902,14 +899,13 @@ body {
   font-weight: 500;
   line-height: 1.35;
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
-  z-index: 99999; /* Sit on top of all page elements */
+  z-index: 99999;
   white-space: pre-wrap;
   word-break: break-word;
   pointer-events: none;
   animation: gtTooltipFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Upward-pointing arrow fill */
 .gt-portal-note-tooltip::before {
   content: '';
   position: absolute;
@@ -922,7 +918,6 @@ body {
   z-index: 2;
 }
 
-/* Upward-pointing arrow black border */
 .gt-portal-note-tooltip::after {
   content: '';
   position: absolute;
@@ -935,23 +930,12 @@ body {
   z-index: 1;
 }
 
-@keyframes gtTooltipFadeIn {
-  from {
-    opacity: 0;
-    transform: translateX(-50%) translateY(-6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
-}
-
-/* Inline Score Input (Exact font size & alignment as standard text, no arrows) */
+/* Inline Score Input */
 .gt-score-inline-input {
   width: auto;
   max-width: 2.5rem;
-  font-size: 0.95rem; /* Matches .gt-grade-score-display */
-  font-weight: 800;   /* Matches .gt-grade-score-display */
+  font-size: 0.95rem;
+  font-weight: 800;
   line-height: 1;
   text-align: center;
   background: transparent;
@@ -966,7 +950,6 @@ body {
   color: var(--text-main, #0f172a);
 }
 
-/* Hide native number input arrows */
 .gt-score-inline-input::-webkit-outer-spin-button,
 .gt-score-inline-input::-webkit-inner-spin-button {
   -webkit-appearance: none;
@@ -1003,4 +986,133 @@ body {
   opacity: 1;
   transform: translateX(0) scale(1);
   pointer-events: auto;
+}
+
+/* ==========================================================================
+   7. Auth Pages & Form Layout System (Sign In & Sign Up)
+   ========================================================================== */
+
+.gt-auth-layout {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background-color: var(--bg-app, #f8fafc);
+}
+
+.gt-auth-card {
+  max-width: 26rem;
+  width: 100%;
+  padding: 2.25rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.gt-auth-header {
+  text-align: center;
+}
+
+.gt-auth-subtitle {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-muted, #64748b);
+  margin-top: 0.25rem;
+}
+
+.gt-auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.gt-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.gt-field-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted, #64748b);
+}
+
+.gt-form-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-main, #0f172a);
+  background-color: #ffffff;
+  border: 2px solid var(--border-color, #000000);
+  border-radius: 0.375rem;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.gt-form-input:focus {
+  border-color: #0f172a;
+  box-shadow: 0 0 0 1px #0f172a;
+}
+
+.gt-auth-submit-btn {
+  margin-top: 0.5rem;
+  padding: 0.65rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-align: center;
+  width: 100%;
+}
+
+.gt-auth-toggle-link {
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-muted, #64748b);
+}
+
+.gt-auth-toggle-link a {
+  font-weight: 700;
+  color: var(--text-main, #0f172a);
+  text-decoration: underline;
+}
+
+.gt-auth-toggle-link a:hover {
+  color: #334155;
+}
+
+.gt-auth-divider {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin: 0.25rem 0;
+}
+
+.gt-auth-divider-line {
+  flex-grow: 1;
+  border-top: 1px solid #e2e8f0;
+}
+
+.gt-auth-divider-text {
+  margin: 0 1rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+}
+
+.gt-auth-error-badge {
+  padding: 0.65rem 0.85rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background-color: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+  border-radius: 0.375rem;
+  text-align: center;
 }

@@ -39,77 +39,73 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center p-6 bg-slate-50">
-      <div className="gt-modal-card max-w-sm w-full !p-8 !gap-6">
-        <div className="text-center mb-1">
-          <h1 className="gt-dashboard-title text-3xl mb-2">GradeTrack</h1>
-          <p className="text-sm font-medium text-slate-500">
-            Sign in to access your account
+    <main className="gt-auth-layout">
+      <div className="gt-modal-card gt-auth-card">
+        <div className="gt-auth-header">
+          <h1 className="gt-dashboard-title !text-3xl !m-0">GradeTrack</h1>
+          <p className="gt-auth-subtitle">
+            Sign in to access your GradeTrack
           </p>
         </div>
 
         {errorMsg && (
-          <div className="p-3 text-xs font-semibold bg-red-50 text-red-700 border border-red-200 rounded-md text-center">
+          <div className="gt-auth-error-badge">
             {errorMsg}
           </div>
         )}
 
-        <form onSubmit={handleLogin} className="flex flex-col gap-5">
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
-              Email Address
-            </label>
+        <form onSubmit={handleLogin} className="gt-auth-form">
+          <div className="gt-field-group">
+            <label className="gt-field-label">Email Address</label>
             <input
               type="email"
               required
-              placeholder="you@example.com"
+              placeholder="user@domain.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="gt-editable-title-input py-2 px-3 text-sm"
+              className="gt-form-input"
             />
           </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
-              Password
-            </label>
+          <div className="gt-field-group">
+            <label className="gt-field-label">Password</label>
             <input
               type="password"
               required
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="gt-editable-title-input py-2 px-3 text-sm"
+              className="gt-form-input"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="gt-btn-primary gt-pop-target mt-2 py-2.5 text-sm font-bold text-center w-full"
+            className="gt-btn-primary gt-pop-target gt-auth-submit-btn"
           >
             {loading ? 'Signing In...' : 'Sign In'}
           </button>
         </form>
 
-        <div className="text-center text-xs text-slate-500 font-medium pt-1">
+        <div className="gt-auth-toggle-link">
           Don&apos;t have an account?{' '}
-          <Link href="/signup" className="font-bold text-slate-900 underline hover:text-slate-700">
+          <Link href="/signup">
             Create an Account
           </Link>
         </div>
 
-        <div className="relative flex py-1 items-center">
-          <div className="flex-grow border-t border-slate-200" />
-          <span className="flex-shrink mx-3 text-xs font-bold uppercase text-slate-400">OR</span>
-          <div className="flex-grow border-t border-slate-200" />
+        <div className="gt-auth-divider">
+          <div className="gt-auth-divider-line" />
+          <span className="gt-auth-divider-text">OR</span>
+          <div className="gt-auth-divider-line" />
         </div>
 
         <button
           type="button"
           onClick={handleDemoAccess}
           disabled={loading}
-          className="gt-btn-cancel gt-pop-target w-full py-2.5 text-sm font-bold text-slate-800"
+          className="gt-btn-cancel gt-pop-target gt-auth-submit-btn !text-slate-800"
         >
           Try Demo Account
         </button>

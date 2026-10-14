@@ -49,32 +49,46 @@ export default function CourseDetailPage({ params }: PageProps) {
       try {
         setLoading(true);
 
-        const { data: { session } } = await supabase.auth.getSession();
-        const isDemoSession =
-          session?.user?.email?.toLowerCase() === 'demo@gradetrack.com' ||
-          searchParams.get('demo') === 'true';
+        const demoParam = searchParams.get('demo') === 'true';
+        let currentUserId: string | null = null;
 
-        setIsDemo(isDemoSession);
+        if (!demoParam) {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session) {
+            router.push('/login');
+            return;
+          }
+          currentUserId = session.user.id;
+        } else {
+          currentUserId = '00000000-0000-0000-0000-000000000000';
+        }
 
+        setIsDemo(demoParam);
+
+        // 1. Fetch course scoped to current user or demo UUID
         const { data: courseData, error: courseErr } = await supabase
           .from('courses')
           .select('field, level')
           .eq('id', courseId)
+          .eq('user_id', currentUserId)
           .single();
 
         if (courseErr) console.error('Error fetching course:', courseErr.message);
         if (courseData) setCourseTitle(`${courseData.field} ${courseData.level}`);
 
+        // 2. Fetch grade groups scoped to course AND current user
         const { data: groupData, error: groupErr } = await supabase
           .from('grade_group')
           .select('*')
           .eq('course_id', courseId)
+          .eq('user_id', currentUserId)
           .order('id', { ascending: true });
 
         if (groupErr) console.error('Error fetching grade_group:', groupErr.message);
         const fetchedGroups = groupData || [];
         setGradeGroups(fetchedGroups);
 
+        // 3. Fetch grade items scoped to groups AND current user
         if (fetchedGroups.length > 0) {
           const groupIds = fetchedGroups.map((g) => g.id);
 
@@ -82,6 +96,7 @@ export default function CourseDetailPage({ params }: PageProps) {
             .from('grades')
             .select('*')
             .in('ggroup_id', groupIds)
+            .eq('user_id', currentUserId)
             .order('id', { ascending: true });
 
           if (gradesErr) console.error('Error fetching grades:', gradesErr.message);
