@@ -1,3 +1,4 @@
+// src/app/course/[id]/page.tsx
 'use client';
 
 import React, { use, useState, useEffect } from 'react';
@@ -7,6 +8,9 @@ import { EditableTitle } from '@/components/editableTitle';
 import { GradeGroup, GradeGroupType } from '@/components/gradeGroup';
 import { GradeItem } from '@/components/gradeCard';
 import { LoadingScreen } from '@/components/loadingScreen';
+import { AddGroupDialog } from '@/components/dialog/addGroupDialog';
+import { AddGradeItemDialog } from '@/components/dialog/addGradeItemDialog';
+import { EditGradeItemDialog } from '@/components/dialog/editGradeItemDialog';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -21,10 +25,13 @@ export default function CourseDetailPage({ params }: PageProps) {
   const [grades, setGrades] = useState<GradeItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
-  // New Group Modal State
-  const [showAddGroupModal, setShowAddGroupModal] = useState(false);
-  const [newGroupName, setNewGroupName] = useState('');
-  const [newGroupWeight, setNewGroupWeight] = useState('10');
+  // Dialog Visibility States
+  const [showAddGroupDialog, setShowAddGroupDialog] = useState(false);
+  const [showAddItemDialog, setShowAddItemDialog] = useState(false);
+  const [showEditItemDialog, setShowEditItemDialog] = useState(false);
+  
+  const [targetGroupId, setTargetGroupId] = useState<number | null>(null);
+  const [editingGradeId, setEditingGradeId] = useState<number | null>(null);
 
   useEffect(() => {
     async function fetchData() {
@@ -120,14 +127,11 @@ export default function CourseDetailPage({ params }: PageProps) {
       .eq('id', groupId);
   };
 
-  const handleCreateGroup = async () => {
-    if (!newGroupName.trim()) return;
-    const weightNum = parseFloat(newGroupWeight) || 0;
-
+  const handleCreateGroup = async (name: string, weight: number) => {
     const payload = {
       course_id: courseId,
-      name: newGroupName.trim(),
-      weight: weightNum,
+      name,
+      weight,
     };
 
     const { data, error } = await supabase
@@ -140,10 +144,88 @@ export default function CourseDetailPage({ params }: PageProps) {
       console.error('Error creating grade group:', error.message);
     } else if (data) {
       setGradeGroups((prev) => [...prev, data]);
-      setNewGroupName('');
-      setNewGroupWeight('10');
-      setShowAddGroupModal(false);
     }
+  };
+
+  const handleOpenAddItemForGroup = (groupId: number) => {
+    setTargetGroupId(groupId);
+    setShowAddItemDialog(true);
+  };
+
+  const handleOpenConfigureGrade = (grade: GradeItem) => {
+    setEditingGradeId(grade.id);
+    setShowEditItemDialog(true);
+  };
+
+  const handleCreateGradeItem = async (
+    groupId: number,
+    name: string,
+    points: number | null,
+    pointsOf: number,
+    note: string | null
+  ) => {
+    const computedPercent =
+      points !== null && pointsOf > 0 ? (points / pointsOf) * 100 : null;
+
+    const newGradePayload = {
+      ggroup_id: groupId,
+      name,
+      is_points: true,
+      points,
+      points_of: pointsOf,
+      percent: computedPercent,
+      note,
+      auto_percent: false,
+    };
+
+    const { data, error } = await supabase
+      .from('grades')
+      .insert([newGradePayload])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error adding grade item:', error.message);
+    } else if (data) {
+      setGrades((prev) => [...prev, data]);
+    }
+  };
+
+  const handleSaveGradeItem = async (
+    id: number,
+    newName: string,
+    newPoints: number | null,
+    newPointsOf: number,
+    newNote: string | null
+  ) => {
+    const computedPercent =
+      newPoints !== null && newPointsOf > 0 ? (newPoints / newPointsOf) * 100 : null;
+
+    setGrades((prev) =>
+      prev.map((g) =>
+        g.id === id
+          ? {
+              ...g,
+              name: newName,
+              points: newPoints,
+              points_of: newPointsOf,
+              percent: computedPercent,
+              note: newNote,
+            }
+          : g
+      )
+    );
+
+    await supabase
+      .from('grades')
+      .update({
+        name: newName,
+        points: newPoints,
+        points_of: newPointsOf,
+        percent: computedPercent,
+        note: newNote,
+      })
+      .eq('id', id);
   };
 
   const calculateOverallGrade = () => {
@@ -195,9 +277,9 @@ export default function CourseDetailPage({ params }: PageProps) {
   };
 
   const overallGrade = calculateOverallGrade();
-
-  // Calculate Total Weight across all grade groups
   const totalGroupWeight = gradeGroups.reduce((acc, g) => acc + (g.weight || 0), 0);
+  const activeGroup = gradeGroups.find((g) => g.id === targetGroupId);
+  const currentEditingGrade = grades.find((g) => g.id === editingGradeId) || null;
 
   const getWeightStatusClass = () => {
     if (totalGroupWeight < 100) return 'gt-weight-under';
@@ -235,25 +317,22 @@ export default function CourseDetailPage({ params }: PageProps) {
         </div>
       </header>
 
-      {/* Sub-Header Actions Row (Under Header Block) */}
+      {/* Sub-Header Actions Row */}
       <div className="gt-course-actions-bar">
-        {/* Left Side: Add Grade Group */}
         <button
           type="button"
-          onClick={() => setShowAddGroupModal(true)}
+          onClick={() => setShowAddGroupDialog(true)}
           className="gt-add-group-btn gt-pop-target"
         >
           + Add Grade Group
         </button>
 
-        {/* Right Side: Group Weight Percentage Total Indicator */}
         <div className="gt-weight-total-wrapper">
           <div className={`gt-weight-total-badge ${getWeightStatusClass()}`}>
             <span>Group Percentage Totals:</span>
             <span>{totalGroupWeight}%</span>
           </div>
 
-          {/* Hover Tooltip */}
           <div className="gt-tooltip">
             <div className="gt-tooltip-title">Weight Allocation Rules</div>
             <div className="gt-tooltip-list">
@@ -263,11 +342,11 @@ export default function CourseDetailPage({ params }: PageProps) {
               </div>
               <div className="gt-tooltip-item">
                 <span className="gt-tooltip-dot gt-dot-green" />
-                <span><strong>Green (= 100%):</strong> Correct weights across groups.</span>
+                <span><strong>Green (= 100%):</strong> Perfectly balanced course syllabus.</span>
               </div>
               <div className="gt-tooltip-item">
                 <span className="gt-tooltip-dot gt-dot-red" />
-                <span><strong>Red (&gt; 100%):</strong> Total exceeds 100%.</span>
+                <span><strong>Red (&gt; 100%):</strong> Total exceeds 100% syllabus limit.</span>
               </div>
             </div>
           </div>
@@ -285,56 +364,33 @@ export default function CourseDetailPage({ params }: PageProps) {
             onDeleteGrade={handleDeleteGrade}
             onDeleteGroup={handleDeleteGroup}
             onUpdateGroup={handleUpdateGroup}
+            onOpenAddItemForGroup={handleOpenAddItemForGroup}
+            onConfigureGrade={handleOpenConfigureGrade}
           />
         ))}
       </div>
 
-      {/* Add Grade Group Modal */}
-      {showAddGroupModal && (
-        <div className="gt-modal-overlay" onClick={() => setShowAddGroupModal(false)}>
-          <div className="gt-modal-card" onClick={(e) => e.stopPropagation()}>
-            <h4 className="gt-modal-title">Create Grade Group</h4>
-            
-            <div className="flex flex-col gap-3">
-              <label className="text-xs font-bold uppercase text-slate-500">Group Name</label>
-              <input
-                type="text"
-                placeholder="e.g. Quizzes, Midterms, Assignments"
-                value={newGroupName}
-                onChange={(e) => setNewGroupName(e.target.value)}
-                autoFocus
-                className="gt-editable-title-input"
-              />
+      {/* Componentized Dialogs */}
+      <AddGroupDialog
+        isOpen={showAddGroupDialog}
+        onClose={() => setShowAddGroupDialog(false)}
+        onCreateGroup={handleCreateGroup}
+      />
 
-              <label className="text-xs font-bold uppercase text-slate-500">Weight (%)</label>
-              <input
-                type="number"
-                placeholder="10"
-                value={newGroupWeight}
-                onChange={(e) => setNewGroupWeight(e.target.value)}
-                className="gt-editable-title-input"
-              />
-            </div>
+      <AddGradeItemDialog
+        isOpen={showAddItemDialog}
+        onClose={() => setShowAddItemDialog(false)}
+        targetGroupId={targetGroupId}
+        targetGroupName={activeGroup?.name}
+        onCreateItem={handleCreateGradeItem}
+      />
 
-            <div className="gt-modal-actions">
-              <button
-                type="button"
-                onClick={() => setShowAddGroupModal(false)}
-                className="gt-btn-cancel gt-pop-target"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleCreateGroup}
-                className="gt-btn-primary gt-pop-target"
-              >
-                Create Group
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <EditGradeItemDialog
+        isOpen={showEditItemDialog}
+        onClose={() => setShowEditItemDialog(false)}
+        grade={currentEditingGrade}
+        onSave={handleSaveGradeItem}
+      />
     </main>
   );
 }

@@ -2,7 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Base Reset & Dynamic Canvas Fallbacks */
 :root {
   --course-accent: var(--color-primary, #64748b);
   --header-tint-opacity: rgba(0, 0, 0, 0.15);
@@ -18,7 +17,7 @@ body {
 }
 
 /* ==========================================================================
-   Global Layout Containers & Header Navigation
+   1. Global Layout Containers & Navigation
    ========================================================================== */
 
 .gt-dashboard-title {
@@ -71,7 +70,7 @@ body {
   z-index: 2;
 }
 
-/* Main Course Title (Regular / Medium Weight) */
+/* Main Course Title */
 .gt-course-main-title {
   font-size: 2rem;
   font-weight: 500;
@@ -100,7 +99,10 @@ body {
   color: var(--text-main, #0f172a);
 }
 
-/* Sub-Header Actions & Totals Row (Under Header Block) */
+/* ==========================================================================
+   2. Sub-Header Actions & Weight Totals
+   ========================================================================== */
+
 .gt-course-actions-bar {
   display: flex;
   align-items: center;
@@ -125,7 +127,7 @@ body {
   background-color: #f1f5f9;
 }
 
-/* Total Weight Badge & Tooltip Wrapper */
+/* Weight Allocation Total Badge & Rules Tooltip */
 .gt-weight-total-wrapper {
   position: relative;
   display: inline-flex;
@@ -164,7 +166,6 @@ body {
   border-color: #dc2626;
 }
 
-/* Floating Tooltip Window */
 .gt-tooltip {
   position: absolute;
   top: 125%;
@@ -178,7 +179,6 @@ body {
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
   z-index: 40;
   
-  /* Initial state */
   opacity: 0;
   transform: translateY(-4px) scale(0.95);
   transition: opacity 0.2s ease, transform 0.2s ease;
@@ -225,7 +225,7 @@ body {
 .gt-dot-red { background-color: #ef4444; }
 
 /* ==========================================================================
-   Section Dividers & Grade Group Cards
+   3. Grade Group Cards & Containers
    ========================================================================== */
 
 .gt-semester-group {
@@ -241,6 +241,7 @@ body {
   background-color: #ffffff;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
   position: relative;
+  overflow: visible !important; /* Permits tooltips to pop out without clipping */
 }
 
 .gt-group-header {
@@ -353,15 +354,267 @@ body {
   font-weight: 800;
 }
 
+/* Expanding Bottom-Right Add Button per Grade Group Container */
+.gt-group-add-btn {
+  position: absolute;
+  bottom: 0.75rem;
+  right: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 2rem;
+  padding: 0 0.6rem;
+  background-color: #0f172a;
+  color: #ffffff;
+  border: 2px solid #000000;
+  border-radius: 1rem;
+  font-size: 0.85rem;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+  transition: all 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 10;
+}
+
+.gt-group-add-label {
+  max-width: 0;
+  opacity: 0;
+  margin-left: 0;
+  transition: max-width 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 0.3s ease,
+              margin-left 0.45s ease;
+}
+
+.gt-group-add-btn:hover {
+  padding: 0 0.85rem;
+  background-color: #1e293b;
+}
+
+.gt-group-add-btn:hover .gt-group-add-label {
+  max-width: 8rem;
+  opacity: 1;
+  margin-left: 0.35rem;
+}
+
 /* ==========================================================================
-   Grids & Horizontal Rail Systems
+   4. Horizontal Rail & Streamlined Square Grade Cards
    ========================================================================== */
 
+.gt-group-items-list {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  overflow-y: visible !important; /* Prevents vertical clipping on pop-out tooltips */
+  padding: 0.5rem 0.5rem 1.5rem 0.5rem;
+  margin-bottom: -1rem;
+  scroll-snap-type: x mandatory;
+}
+
+.gt-group-empty-state {
+  font-size: 0.875rem;
+  color: var(--text-muted, #64748b);
+  padding: 1rem 0;
+  font-style: italic;
+}
+
+/* Square Grade Cards (4.5rem x 4.5rem) */
+.gt-grade-card {
+  flex: 0 0 auto;
+  min-width: 4.5rem;
+  max-width: 9rem; /* 2x standard width limit */
+  width: max-content;
+  height: 4.5rem;
+  padding: 0.4rem;
+  border: 2px solid var(--border-color, #000000);
+  border-radius: var(--border-radius, 0.5rem);
+  background-color: var(--bg-card, #ffffff);
+  scroll-snap-align: start;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  overflow: visible !important;
+  transition: z-index 0s;
+}
+
+/* Elevate card stacking context on hover so note sits above surrounding elements */
+.gt-grade-card:hover {
+  z-index: 50;
+}
+
+.gt-grade-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 100%;
+  overflow: hidden;
+}
+
+.gt-grade-name {
+  font-size: 0.9rem;
+  font-weight: 650;
+  color: var(--text-main, #0f172a);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+}
+
+.gt-grade-score-wrapper {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  width: 100%;
+}
+
+.gt-grade-score-display {
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--text-muted, #64748b);
+}
+
+.gt-grade-max-points {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted, #64748b);
+}
+
+/* Slide-out Bottom Action Controls (Configure + Delete) */
+.gt-card-popout-controls {
+  position: absolute;
+  bottom: -0.75rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(-0.25rem) scale(0.8);
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  opacity: 0;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 0.2s ease;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.gt-grade-card:hover .gt-card-popout-controls {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+.gt-card-pop-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  background-color: #ffffff;
+  border: 2px solid var(--border-color, #000000);
+  border-radius: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: bold;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+  color: #000000; /* Ensures glyphs default to solid black */
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+}
+
+.gt-card-pop-btn:hover {
+  background-color: #f1f5f9;
+  transform: scale(1.1);
+}
+
+.gt-card-pop-delete {
+  color: #ef4444;
+}
+
+.gt-card-pop-delete:hover {
+  background-color: #fef2f2;
+  border-color: #dc2626;
+  color: #dc2626;
+}
+
+/* ==========================================================================
+   5. Pop-Out Note Tooltip System
+   ========================================================================== */
+
+.gt-note-tooltip {
+  position: absolute;
+  top: calc(100% + 0.85rem);
+  left: 50%;
+  transform: translateX(-50%) translateY(-6px);
+  max-width: 20rem; /* ~4.5 grade item lengths */
+  min-width: 8rem;
+  width: max-content;
+  background-color: #0f172a;
+  color: #ffffff;
+  border: 2px solid #000000;
+  border-radius: 0.5rem;
+  padding: 0.6rem 0.85rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.35;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+  z-index: 999;
+  white-space: pre-wrap;
+  word-break: break-word;
+  
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
+  transition-delay: 0s;
+}
+
+/* Upward-pointing arrow fill */
+.gt-note-tooltip::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px;
+  border-style: solid;
+  border-color: transparent transparent #0f172a transparent;
+  z-index: 2;
+}
+
+/* Upward-pointing arrow black border */
+.gt-note-tooltip::after {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 8px;
+  border-style: solid;
+  border-color: transparent transparent #000000 transparent;
+  z-index: 1;
+}
+
+/* Reveal tooltip after 1-second hover delay */
+.gt-grade-card:hover .gt-note-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+  transition-delay: 1s;
+}
+
+/* ==========================================================================
+   6. Dashboard Grids, Pop Animations & Universal Dialogs
+   ========================================================================== */
+
+/* Flexible Wrap Grid - Courses fill naturally without horizontal scrolling */
 .gt-course-grid {
   display: flex;
   flex-wrap: wrap;
   gap: 1rem;
   margin-top: 1rem;
+  align-items: stretch;
 }
 
 .gt-pop-target {
@@ -373,7 +626,7 @@ body {
 }
 
 .gt-pop-target:hover {
-  transform: scale(1.05) translateY(-2px);
+  transform: scale(1.04) translateY(-2px);
   box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
 }
 
@@ -404,37 +657,57 @@ body {
   background-color: var(--bg-card-hover, #f1f5f9);
 }
 
-.gt-group-items-list {
-  display: flex;
-  gap: 1rem;
-  overflow-x: auto;
-  padding: 0.5rem 0.25rem 0.5rem 0.25rem;
-  scroll-snap-type: x mandatory;
-}
-
-.gt-grade-card {
-  flex: 0 0 14rem;
-  height: 9rem;
-  padding: 1rem;
-  border: 2px solid var(--border-color, #000000);
+.gt-add-course-square-btn {
+  width: 3.5rem;
+  height: 3.5rem;
+  align-self: center; /* Centers vertically within the course card row */
+  border: 2px dashed #94a3b8;
   border-radius: var(--border-radius, 0.5rem);
-  background-color: var(--bg-card, #ffffff);
-  scroll-snap-align: start;
+  background-color: #ffffff;
   display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #64748b;
+  font-size: 1.5rem;
+  font-weight: 500;
+  line-height: 1;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.gt-group-empty-state {
-  font-size: 0.875rem;
-  color: var(--text-muted, #64748b);
-  padding: 1rem 0;
-  font-style: italic;
+.gt-add-course-square-btn:hover {
+  border: 2px solid #000000;
+  background-color: #f1f5f9;
+  color: #0f172a;
 }
 
-/* ==========================================================================
-   Utilities & Modals
-   ========================================================================== */
+/* Centered Bottom Add Course Group Pill Button */
+.gt-add-course-group-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-top: 2.5rem;
+  margin-bottom: 3.5rem;
+}
+
+.gt-add-course-group-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 2.5rem;
+  padding: 0 1.25rem;
+  background-color: #0f172a;
+  color: #ffffff;
+  border: 2px solid #000000;
+  border-radius: 1.25rem;
+  font-size: 0.9rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.gt-add-course-group-btn:hover {
+  background-color: #1e293b;
+}
 
 .gt-back-link {
   display: inline-block;
@@ -447,6 +720,7 @@ body {
   text-decoration: underline;
 }
 
+/* Dialog Modals Overlay */
 .gt-modal-overlay {
   position: fixed;
   inset: 0;
@@ -455,7 +729,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 50;
+  z-index: 1000;
 }
 
 .gt-modal-card {
@@ -530,12 +804,31 @@ body {
   cursor: pointer;
 }
 
-/* Title Input Constraints */
+/* Editable Title Inputs */
+/* Inline Action Group (Edit Pencil + Delete X side-by-side) */
 .gt-editable-title-container {
   display: inline-flex;
   align-items: center;
   position: relative;
   max-width: 100%;
+  pointer-events: auto;
+}
+
+.gt-inline-action-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-left: 0.35rem;
+  opacity: 0;
+  transform: translateX(-0.5rem) scale(0.85);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), 
+              opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.gt-editable-title-container:hover .gt-inline-action-group {
+  opacity: 1;
+  transform: translateX(0) scale(1);
   pointer-events: auto;
 }
 
@@ -590,26 +883,124 @@ body {
   outline: none;
 }
 
-/* Floating Bottom-Right "+ Add Grade" Button */
-.gt-floating-add-btn {
-  position: fixed;
-  bottom: 2rem;
-  right: 2rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+/* ==========================================================================
+   Portal Note Tooltip System (Floating over document body)
+   ========================================================================== */
+
+.gt-portal-note-tooltip {
+  position: absolute;
+  transform: translateX(-50%);
+  max-width: 20rem; /* ~4.5 grade item lengths */
+  min-width: 8rem;
+  width: max-content;
   background-color: #0f172a;
   color: #ffffff;
   border: 2px solid #000000;
-  border-radius: 2rem;
-  padding: 0.75rem 1.25rem;
-  font-size: 0.95rem;
-  font-weight: 800;
-  cursor: pointer;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.25);
-  z-index: 30;
+  border-radius: 0.5rem;
+  padding: 0.6rem 0.85rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.35;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+  z-index: 99999; /* Sit on top of all page elements */
+  white-space: pre-wrap;
+  word-break: break-word;
+  pointer-events: none;
+  animation: gtTooltipFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-.gt-floating-add-btn:hover {
-  background-color: #1e293b;
+/* Upward-pointing arrow fill */
+.gt-portal-note-tooltip::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px;
+  border-style: solid;
+  border-color: transparent transparent #0f172a transparent;
+  z-index: 2;
+}
+
+/* Upward-pointing arrow black border */
+.gt-portal-note-tooltip::after {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 8px;
+  border-style: solid;
+  border-color: transparent transparent #000000 transparent;
+  z-index: 1;
+}
+
+@keyframes gtTooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+/* Inline Score Input (Exact font size & alignment as standard text, no arrows) */
+.gt-score-inline-input {
+  width: auto;
+  max-width: 2.5rem;
+  font-size: 0.95rem; /* Matches .gt-grade-score-display */
+  font-weight: 800;   /* Matches .gt-grade-score-display */
+  line-height: 1;
+  text-align: center;
+  background: transparent;
+  border-bottom: 2px solid var(--border-color, #000000);
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  border-radius: 0;
+  outline: none;
+  padding: 0;
+  margin: 0;
+  color: var(--text-main, #0f172a);
+}
+
+/* Hide native number input arrows */
+.gt-score-inline-input::-webkit-outer-spin-button,
+.gt-score-inline-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.gt-score-inline-input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+.gt-course-card-wrapper {
+  position: relative;
+}
+
+.gt-course-card-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+}
+
+.gt-course-popout-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  opacity: 0;
+  transform: translateX(-0.5rem) scale(0.85);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), 
+              opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.gt-course-card-title-row:hover .gt-course-popout-actions {
+  opacity: 1;
+  transform: translateX(0) scale(1);
+  pointer-events: auto;
 }

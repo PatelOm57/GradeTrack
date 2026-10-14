@@ -1,3 +1,4 @@
+// src/components/gradeGroup.tsx
 'use client';
 
 import React, { useState } from 'react';
@@ -18,6 +19,8 @@ interface GradeGroupProps {
   onDeleteGrade: (gradeId: number) => void;
   onDeleteGroup?: (groupId: number) => void;
   onUpdateGroup?: (groupId: number, newName: string, newWeight: number) => void;
+  onOpenAddItemForGroup?: (groupId: number) => void;
+  onConfigureGrade?: (grade: GradeItem) => void;
 }
 
 export function GradeGroup({
@@ -27,6 +30,8 @@ export function GradeGroup({
   onDeleteGrade,
   onDeleteGroup,
   onUpdateGroup,
+  onOpenAddItemForGroup,
+  onConfigureGrade,
 }: GradeGroupProps) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -94,7 +99,6 @@ export function GradeGroup({
     <>
       <section className="gt-group-card">
         <div className="gt-group-header">
-          {/* Column for Title & Editable Weight underneath */}
           <div className="gt-group-meta-col">
             <div className="gt-group-title-row">
               {isEditingTitle ? (
@@ -111,7 +115,6 @@ export function GradeGroup({
                 <h3 className="gt-group-title">{group.name}</h3>
               )}
 
-              {/* Dual Pop-Out Actions (Edit closer, Delete further) */}
               <div className="gt-group-popout-actions">
                 <button
                   type="button"
@@ -135,7 +138,6 @@ export function GradeGroup({
               </div>
             </div>
 
-            {/* Editable Weight Row directly underneath */}
             <div className="gt-group-weight-row">
               {isEditingWeight ? (
                 <input
@@ -177,6 +179,7 @@ export function GradeGroup({
                 grade={grade}
                 onUpdateScore={onUpdateScore}
                 onDelete={onDeleteGrade}
+                onConfigure={onConfigureGrade}
               />
             ))
           ) : (
@@ -185,9 +188,20 @@ export function GradeGroup({
             </div>
           )}
         </div>
+
+        {onOpenAddItemForGroup && (
+          <button
+            type="button"
+            onClick={() => onOpenAddItemForGroup(group.id)}
+            className="gt-group-add-btn gt-pop-target"
+            title={`Add grade item to ${group.name}`}
+          >
+            <span>+</span>
+            <span className="gt-group-add-label">Add Grade Item</span>
+          </button>
+        )}
       </section>
 
-      {/* Delete Confirmation Modal */}
       {showDeleteModal && (
         <div className="gt-modal-overlay" onClick={() => setShowDeleteModal(false)}>
           <div className="gt-modal-card" onClick={(e) => e.stopPropagation()}>
