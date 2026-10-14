@@ -16,17 +16,16 @@ I wanted a system in which users could do everything they would need in order to
 
 - **Weighted Grade Calculation:** Eliminate guessing by calculating exact grades using assignment group weights.
 
-- **Target Grade Modeling:** Predict the exact scores you need on upcoming finals or assignments to reach your desired final letter grade.
-
 - **Direct Course Access:** Dedicated detail views for every course so you can manage individual grade breakdowns seamlessly.
 
-- **Local/Cloud Storage:** Automatic saving either to the Supabase cloud or locally allows you to manage how you want to save your information.
+- **Cloud Storage:** Automatic saving to the Supabase cloud allows you to effortlessly save scores and grading schemes.
 
-  - Note: Local storage is the default, cloud storage via Supabase will require an access key to enable and will not be implemented for the general use.
-
-- **Cross-device Access (Cloud only):** No need to recreate everything if you left it on your laptop and wanted to make a quick guess on the go. Sync to Supabase lets you login and access the same data anywhere.
+- **Cross-device Access:** No need to recreate everything if you left it on your laptop and wanted to make a quick guess on the go.
 
 ## Features to look forward to
+
+- **Target Grade Modeling:** Predict the exact scores you need on upcoming finals or assignments to reach your desired final letter grade.
+
 - **Universal Cloud Storage:** Implementing connection to Google Drive so users can maintain cloud connectivity with a simple Google sign-in.
 
 - **Timing and Graphing:** Optional feature to see grade over time with timestamped assignments (not incredibly useful in my opinion but nevertheless fun).
@@ -34,3 +33,6 @@ I wanted a system in which users could do everything they would need in order to
 - **Drop rules:** Option to drop lowest *x* scores from grade group.
 
 - **AI Scan & Create:** AI integration to automate creation of grade groups based on direct syllabus uploads
+
+## Vercel Deployment:
+https://grade-track-drab.vercel.app/
