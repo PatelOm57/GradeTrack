@@ -1,6 +1,8 @@
+// src/components/gradeGroup.tsx
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
+import Image from 'next/image';
 import { GradeCard, GradeItem } from '@/components/gradeCard';
 
 export interface GradeGroupType {
@@ -15,7 +17,10 @@ interface GradeGroupProps {
   grades: GradeItem[];
   onUpdateScore: (gradeId: number, newPoints: number | null, newPercent: number | null) => void;
   onDeleteGrade: (gradeId: number) => void;
-  onAddGrade?: (groupId: number) => void;
+  onDeleteGroup?: (groupId: number) => void;
+  onUpdateGroup?: (groupId: number, newName: string, newWeight: number) => void;
+  onOpenAddItemForGroup?: (groupId: number) => void;
+  onConfigureGrade?: (grade: GradeItem) => void;
 }
 
 export function GradeGroup({
@@ -23,8 +28,18 @@ export function GradeGroup({
   grades,
   onUpdateScore,
   onDeleteGrade,
-  onAddGrade,
+  onDeleteGroup,
+  onUpdateGroup,
+  onOpenAddItemForGroup,
+  onConfigureGrade,
 }: GradeGroupProps) {
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [titleInput, setTitleInput] = useState(group.name);
+
+  const [isEditingWeight, setIsEditingWeight] = useState(false);
+  const [weightInput, setWeightInput] = useState(String(group.weight));
+
   const groupAverage = React.useMemo(() => {
     let totalEarnedPoints = 0;
     let totalPossiblePoints = 0;
@@ -54,54 +69,166 @@ export function GradeGroup({
     return null;
   }, [grades]);
 
+  const handleTitleSubmit = () => {
+    setIsEditingTitle(false);
+    if (titleInput.trim() !== '' && onUpdateGroup) {
+      onUpdateGroup(group.id, titleInput.trim(), group.weight);
+    } else {
+      setTitleInput(group.name);
+    }
+  };
+
+  const handleWeightSubmit = () => {
+    setIsEditingWeight(false);
+    const parsed = parseFloat(weightInput);
+    if (!isNaN(parsed) && onUpdateGroup) {
+      onUpdateGroup(group.id, group.name, parsed);
+    } else {
+      setWeightInput(String(group.weight));
+    }
+  };
+
+  const handleConfirmDelete = () => {
+    setShowDeleteModal(false);
+    if (onDeleteGroup) {
+      onDeleteGroup(group.id);
+    }
+  };
+
   return (
-    <section className="border rounded-xl bg-white shadow-sm overflow-hidden transition-all">
-      {/* Group Header */}
-      <div className="flex items-center justify-between p-4 border-b bg-slate-50/60">
-        <div className="flex items-center gap-3">
-          <h3 className="font-bold text-slate-800 text-lg">{group.name}</h3>
-          <span className="text-xs font-semibold px-2 py-0.5 rounded bg-slate-200/70 text-slate-600">
-            {group.weight}% of grade
-          </span>
+    <>
+      <section className="gt-group-card">
+        <div className="gt-group-header">
+          <div className="gt-group-meta-col">
+            <div className="gt-group-title-row">
+              {isEditingTitle ? (
+                <input
+                  type="text"
+                  value={titleInput}
+                  onChange={(e) => setTitleInput(e.target.value)}
+                  onBlur={handleTitleSubmit}
+                  onKeyDown={(e) => e.key === 'Enter' && handleTitleSubmit()}
+                  autoFocus
+                  className="gt-editable-title-input gt-group-title"
+                />
+              ) : (
+                <h3 className="gt-group-title">{group.name}</h3>
+              )}
+
+              <div className="gt-group-popout-actions">
+                <button
+                  type="button"
+                  onClick={() => setIsEditingTitle(true)}
+                  className="gt-popout-btn-small gt-pop-target"
+                  title="Edit group name"
+                >
+                  <Image src="/edit-icon.svg" alt="Edit" width={12} height={12} />
+                </button>
+
+                {onDeleteGroup && (
+                  <button
+                    type="button"
+                    onClick={() => setShowDeleteModal(true)}
+                    className="gt-popout-btn-small gt-popout-btn-delete gt-pop-target"
+                    title={`Delete ${group.name} group`}
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="gt-group-weight-row">
+              {isEditingWeight ? (
+                <input
+                  type="number"
+                  value={weightInput}
+                  onChange={(e) => setWeightInput(e.target.value)}
+                  onBlur={handleWeightSubmit}
+                  onKeyDown={(e) => e.key === 'Enter' && handleWeightSubmit()}
+                  autoFocus
+                  className="gt-weight-input"
+                />
+              ) : (
+                <span 
+                  onClick={() => setIsEditingWeight(true)}
+                  className="cursor-pointer hover:underline"
+                  title="Click to edit group weight percentage"
+                >
+                  {group.weight}% of grade
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="gt-group-stats">
+            <span className="gt-group-avg-display">
+              Avg:{' '}
+              <span className={groupAverage !== null ? 'gt-avg-value' : 'gt-avg-empty'}>
+                {groupAverage !== null ? `${groupAverage}%` : '—'}
+              </span>
+            </span>
+          </div>
         </div>
 
-        {/* Group Stats */}
-        <div className="flex items-center gap-4">
-          <span className="text-sm font-semibold text-slate-600">
-            Avg:{' '}
-            <span className={groupAverage !== null ? 'text-blue-600 font-bold' : 'text-slate-400'}>
-              {groupAverage !== null ? `${groupAverage}%` : '—'}
-            </span>
-          </span>
-
-          {onAddGrade && (
-            <button
-              onClick={() => onAddGrade(group.id)}
-              className="text-xs font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-2.5 py-1.5 rounded-lg transition-colors border border-blue-200"
-            >
-              + Add Grade Item
-            </button>
+        <div className="gt-group-items-list">
+          {grades.length > 0 ? (
+            grades.map((grade) => (
+              <GradeCard
+                key={grade.id}
+                grade={grade}
+                onUpdateScore={onUpdateScore}
+                onDelete={onDeleteGrade}
+                onConfigure={onConfigureGrade}
+              />
+            ))
+          ) : (
+            <div className="gt-group-empty-state">
+              No grade items added to this group yet.
+            </div>
           )}
         </div>
-      </div>
 
-      {/* Grades List */}
-      <div>
-        {grades.length > 0 ? (
-          grades.map((grade) => (
-            <GradeCard
-              key={grade.id}
-              grade={grade}
-              onUpdateScore={onUpdateScore}
-              onDelete={onDeleteGrade}
-            />
-          ))
-        ) : (
-          <div className="p-4 text-center text-xs text-slate-400 italic">
-            No grade items added to this group yet.
-          </div>
+        {onOpenAddItemForGroup && (
+          <button
+            type="button"
+            onClick={() => onOpenAddItemForGroup(group.id)}
+            className="gt-group-add-btn gt-pop-target"
+            title={`Add grade item to ${group.name}`}
+          >
+            <span>+</span>
+            <span className="gt-group-add-label">Add Grade Item</span>
+          </button>
         )}
-      </div>
-    </section>
+      </section>
+
+      {showDeleteModal && (
+        <div className="gt-modal-overlay" onClick={() => setShowDeleteModal(false)}>
+          <div className="gt-modal-card" onClick={(e) => e.stopPropagation()}>
+            <h4 className="gt-modal-title">Delete Grade Group?</h4>
+            <p className="gt-modal-text">
+              Are you sure you want to delete <strong>{group.name}</strong>? This action will permanently remove all grade items inside this group.
+            </p>
+
+            <div className="gt-modal-actions">
+              <button 
+                type="button"
+                onClick={() => setShowDeleteModal(false)}
+                className="gt-btn-cancel gt-pop-target"
+              >
+                Cancel
+              </button>
+              <button 
+                type="button"
+                onClick={handleConfirmDelete}
+                className="gt-btn-delete gt-pop-target"
+              >
+                Delete Group
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

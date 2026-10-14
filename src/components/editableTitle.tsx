@@ -1,124 +1,122 @@
+// src/components/editableTitle.tsx
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 
 interface EditableTitleProps {
   initialValue: string;
-  onSave: (field: string, level: string) => void;
-  /** Optional mode: 'course' enforces [Text][Number]. 'group' allows any single text block. */
-  mode?: 'course' | 'group';
-  onSaveGroup?: (value: string) => void;
+  mode: 'course' | 'group';
   className?: string;
+  onSave: (field: string, level: string) => void;
+  onSaveGroup?: (newName: string) => void;
+  onDelete?: () => void;
   titleTip?: string;
-}
-
-/** Parser to extract field and level */
-export function parseCourseTitle(raw: string): { field: string; level: string } | null {
-  const trimmed = raw.trim();
-  // Regex matches 1+ non-digits at start, optional spaces, and 1+ digits at end
-  const match = trimmed.match(/^([A-Za-z\s-]+?)\s*(\d+)$/);
-  if (!match) return null;
-
-  return {
-    field: match[1].trim(),
-    level: match[2].trim(),
-  };
 }
 
 export function EditableTitle({
   initialValue,
+  mode,
+  className = '',
   onSave,
-  mode = 'course',
   onSaveGroup,
-  className = 'text-2xl font-bold',
-  titleTip = 'Click to rename',
+  onDelete,
+  titleTip = 'Click edit icon to rename',
 }: EditableTitleProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [value, setValue] = useState(initialValue);
-  const [hasError, setHasError] = useState(false);
+  const [prevInitialValue, setPrevInitialValue] = useState(initialValue);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleSave = () => {
-    const trimmed = value.trim();
+  // Sync state during render when prop changes
+  if (initialValue !== prevInitialValue) {
+    setPrevInitialValue(initialValue);
+    setValue(initialValue);
+  }
 
-    if (mode === 'course') {
-      const parsed = parseCourseTitle(trimmed);
-      if (!parsed) {
-        setHasError(true);
-        return; // Don't close or save if format is invalid
-      }
-      setHasError(false);
-      setIsEditing(false);
-      if (trimmed !== initialValue) {
-        onSave(parsed.field, parsed.level);
-      }
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [isEditing]);
+
+  const handleBlur = () => {
+    setIsEditing(false);
+    if (!value.trim()) {
+      setValue(initialValue);
+      return;
+    }
+
+    if (mode === 'group' && onSaveGroup) {
+      onSaveGroup(value.trim());
     } else {
-      // Group mode (allows any name, e.g., "Fall 2026")
-      if (trimmed === '') {
-        setHasError(true);
-        return;
-      }
-      setHasError(false);
-      setIsEditing(false);
-      if (trimmed !== initialValue && onSaveGroup) {
-        onSaveGroup(trimmed);
-      }
+      const parts = value.trim().split(' ');
+      const field = parts[0] || '';
+      const level = parts.slice(1).join(' ') || '';
+      onSave(field, level);
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') handleSave();
-    if (e.key === 'Escape') {
+    if (e.key === 'Enter') {
+      handleBlur();
+    } else if (e.key === 'Escape') {
       setValue(initialValue);
-      setHasError(false);
       setIsEditing(false);
     }
   };
 
   if (isEditing) {
     return (
-      <div className="inline-flex flex-col">
-        <input
-          type="text"
-          value={value}
-          onChange={(e) => {
-            setValue(e.target.value);
-            if (hasError) setHasError(false);
-          }}
-          onBlur={handleSave}
-          onKeyDown={handleKeyDown}
-          autoFocus
-          className={`${className} border-2 ${
-            hasError ? 'border-red-500 bg-red-50' : 'border-blue-500 bg-white'
-          } px-2 py-0.5 rounded-lg text-slate-800 outline-none shadow-sm transition-colors`}
-        />
-        {hasError && (
-          <span className="text-xs text-red-500 mt-1 font-normal">
-            {mode === 'course'
-              ? 'Must start with letters and end with numbers (e.g. CS 210)'
-              : 'Name cannot be empty'}
-          </span>
-        )}
-      </div>
+      <input
+        ref={inputRef}
+        type="text"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onBlur={handleBlur}
+        onKeyDown={handleKeyDown}
+        className="gt-editable-title-input"
+        onClick={(e) => e.stopPropagation()}
+      />
     );
   }
 
   return (
-    <div className="inline-block">
-      <h2
-        onClick={() => setIsEditing(true)}
-        className={`${className} text-slate-800 hover:text-slate-400 cursor-pointer border border-transparent hover:border-slate-300 px-2 py-1 rounded-lg transition-all inline-flex items-center gap-2 group`}
-        title={titleTip}
-      >
-        <span>{value}</span>
-        <Image
-          src="/edit-icon.svg"
-          alt="Edit"
-          width={20}
-          height={20}
-          className="w-5 h-5 opacity-0 group-hover:opacity-100 transition-opacity"
-        />
-      </h2>
+    <div className="gt-editable-title-container">
+      <span className={className} title={initialValue}>
+        {initialValue}
+      </span>
+
+      <div className="gt-inline-action-group">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setIsEditing(true);
+          }}
+          className="gt-popout-btn-small gt-pop-target"
+          title={titleTip}
+        >
+          <Image src="/edit-icon.svg" alt="Edit" width={12} height={12} />
+        </button>
+
+        {onDelete && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onDelete();
+            }}
+            className="gt-popout-btn-small gt-popout-btn-delete gt-pop-target"
+            title="Delete"
+          >
+            ✕
+          </button>
+        )}
+      </div>
     </div>
   );
 }
