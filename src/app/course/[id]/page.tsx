@@ -3,6 +3,7 @@
 
 import React, { use, useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/config/supabase';
 import { EditableTitle } from '@/components/editableTitle';
 import { GradeGroup, GradeGroupType } from '@/components/gradeGroup';
@@ -17,6 +18,8 @@ interface PageProps {
 }
 
 export default function CourseDetailPage({ params }: PageProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { id } = use(params);
   const courseId = parseInt(id, 10);
 
@@ -24,6 +27,9 @@ export default function CourseDetailPage({ params }: PageProps) {
   const [gradeGroups, setGradeGroups] = useState<GradeGroupType[]>([]);
   const [grades, setGrades] = useState<GradeItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+
+  const [isDemo, setIsDemo] = useState<boolean>(false);
+  const [notice, setNotice] = useState<string | null>(null);
 
   // Dialog Visibility States
   const [showAddGroupDialog, setShowAddGroupDialog] = useState(false);
@@ -33,10 +39,22 @@ export default function CourseDetailPage({ params }: PageProps) {
   const [targetGroupId, setTargetGroupId] = useState<number | null>(null);
   const [editingGradeId, setEditingGradeId] = useState<number | null>(null);
 
+  const notifyDemoBlocked = () => {
+    setNotice('Demo Mode: Cannot Edit');
+    setTimeout(() => setNotice(null), 3500);
+  };
+
   useEffect(() => {
     async function fetchData() {
       try {
         setLoading(true);
+
+        const { data: { session } } = await supabase.auth.getSession();
+        const isDemoSession =
+          session?.user?.email?.toLowerCase() === 'demo@gradetrack.com' ||
+          searchParams.get('demo') === 'true';
+
+        setIsDemo(isDemoSession);
 
         const { data: courseData, error: courseErr } = await supabase
           .from('courses')
@@ -79,9 +97,16 @@ export default function CourseDetailPage({ params }: PageProps) {
     }
 
     if (courseId) fetchData();
-  }, [courseId]);
+  }, [courseId, searchParams]);
+
+  const handleAuthAction = async () => {
+    await supabase.auth.signOut();
+    router.push('/login');
+    router.refresh();
+  };
 
   const handleRenameCourse = async (field: string, level: string) => {
+    if (isDemo) return notifyDemoBlocked();
     setCourseTitle(`${field} ${level}`);
     await supabase.from('courses').update({ field, level }).eq('id', courseId);
   };
@@ -91,6 +116,7 @@ export default function CourseDetailPage({ params }: PageProps) {
     newPoints: number | null,
     newPercent: number | null
   ) => {
+    if (isDemo) return notifyDemoBlocked();
     setGrades((prev) =>
       prev.map((g) =>
         g.id === gradeId ? { ...g, points: newPoints, percent: newPercent } : g
@@ -104,11 +130,13 @@ export default function CourseDetailPage({ params }: PageProps) {
   };
 
   const handleDeleteGrade = async (gradeId: number) => {
+    if (isDemo) return notifyDemoBlocked();
     setGrades((prev) => prev.filter((g) => g.id !== gradeId));
     await supabase.from('grades').delete().eq('id', gradeId);
   };
 
   const handleDeleteGroup = async (groupId: number) => {
+    if (isDemo) return notifyDemoBlocked();
     setGradeGroups((prev) => prev.filter((g) => g.id !== groupId));
     setGrades((prev) => prev.filter((g) => g.ggroup_id !== groupId));
 
@@ -117,6 +145,7 @@ export default function CourseDetailPage({ params }: PageProps) {
   };
 
   const handleUpdateGroup = async (groupId: number, newName: string, newWeight: number) => {
+    if (isDemo) return notifyDemoBlocked();
     setGradeGroups((prev) =>
       prev.map((g) => (g.id === groupId ? { ...g, name: newName, weight: newWeight } : g))
     );
@@ -128,6 +157,7 @@ export default function CourseDetailPage({ params }: PageProps) {
   };
 
   const handleCreateGroup = async (name: string, weight: number) => {
+    if (isDemo) return notifyDemoBlocked();
     const payload = {
       course_id: courseId,
       name,
@@ -148,11 +178,13 @@ export default function CourseDetailPage({ params }: PageProps) {
   };
 
   const handleOpenAddItemForGroup = (groupId: number) => {
+    if (isDemo) return notifyDemoBlocked();
     setTargetGroupId(groupId);
     setShowAddItemDialog(true);
   };
 
   const handleOpenConfigureGrade = (grade: GradeItem) => {
+    if (isDemo) return notifyDemoBlocked();
     setEditingGradeId(grade.id);
     setShowEditItemDialog(true);
   };
@@ -164,6 +196,7 @@ export default function CourseDetailPage({ params }: PageProps) {
     pointsOf: number,
     note: string | null
   ) => {
+    if (isDemo) return notifyDemoBlocked();
     const computedPercent =
       points !== null && pointsOf > 0 ? (points / pointsOf) * 100 : null;
 
@@ -198,6 +231,7 @@ export default function CourseDetailPage({ params }: PageProps) {
     newPointsOf: number,
     newNote: string | null
   ) => {
+    if (isDemo) return notifyDemoBlocked();
     const computedPercent =
       newPoints !== null && newPointsOf > 0 ? (newPoints / newPointsOf) * 100 : null;
 
@@ -291,12 +325,30 @@ export default function CourseDetailPage({ params }: PageProps) {
 
   return (
     <main className="gt-course-detail-layout">
-      {/* Standard Navigation */}
+      {/* Blocked Notification Toast */}
+      {notice && (
+        <div className="fixed top-4 right-4 z-50 p-3 bg-red-600 text-white border-2 border-black rounded-md text-xs font-extrabold shadow-lg animate-bounce">
+          {notice}
+        </div>
+      )}
+
+      {/* Top Navigation Row with Top-Right Action Button */}
       <nav className="gt-course-nav">
-        <Link href="/" className="gt-back-link gt-pop-target">
+        <Link 
+          href={`/${isDemo ? '?demo=true' : ''}`} 
+          className="gt-back-link gt-pop-target font-semibold"
+        >
           ← Back to Dashboard
         </Link>
-        <div className="gt-nav-status">Connected to Supabase</div>
+        
+        <button
+          type="button"
+          onClick={handleAuthAction}
+          className="gt-btn-cancel gt-pop-target text-xs px-3 py-1.5 font-bold text-slate-800 hover:text-red-600 hover:border-red-500"
+          title={isDemo ? 'Exit Demo Mode' : 'Sign out of GradeTrack'}
+        >
+          {isDemo ? 'Exit Demo' : 'Sign Out'}
+        </button>
       </nav>
 
       {/* Course Header Bar */}
@@ -321,7 +373,7 @@ export default function CourseDetailPage({ params }: PageProps) {
       <div className="gt-course-actions-bar">
         <button
           type="button"
-          onClick={() => setShowAddGroupDialog(true)}
+          onClick={() => (isDemo ? notifyDemoBlocked() : setShowAddGroupDialog(true))}
           className="gt-add-group-btn gt-pop-target"
         >
           + Add Grade Group

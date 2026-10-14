@@ -3,6 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/config/supabase';
 import { EditableTitle } from '@/components/editableTitle';
 import { LoadingScreen } from '@/components/loadingScreen';
@@ -25,10 +26,16 @@ export interface Course {
 }
 
 export default function Home() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   const [courseGroups, setCourseGroups] = useState<CourseGroup[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [isDemo, setIsDemo] = useState<boolean>(false);
+  const [notice, setNotice] = useState<string | null>(null);
 
   // Dialog States
   const [showAddGroupDialog, setShowAddGroupDialog] = useState(false);
@@ -39,36 +46,39 @@ export default function Home() {
   const [deletingGroup, setDeletingGroup] = useState<CourseGroup | null>(null);
   const [deletingCourse, setDeletingCourse] = useState<Course | null>(null);
 
+  const notifyDemoBlocked = () => {
+    setNotice('Demo Mode: Cannot Edit');
+    setTimeout(() => setNotice(null), 3500);
+  };
+
   useEffect(() => {
     async function fetchData() {
       try {
         setLoading(true);
-        let { data: { session } } = await supabase.auth.getSession();
+        const demoParam = searchParams.get('demo') === 'true';
 
-        if (!session) {
-          const testEmail = process.env.NEXT_PUBLIC_TEST_EMAIL;
-          const testPassword = process.env.NEXT_PUBLIC_TEST_PASS;
-
-          if (testEmail && testPassword) {
-            const { data: authData, error: authErr } = await supabase.auth.signInWithPassword({
-              email: testEmail,
-              password: testPassword,
-            });
-            if (authErr) throw authErr;
-            session = authData.session;
+        if (!demoParam) {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session) {
+            router.push('/login');
+            return;
           }
         }
 
-        const { data: groupsData, error: groupsErr } = await supabase
-          .from('course_group')
-          .select('*')
-          .order('id', { ascending: true });
+        setIsDemo(demoParam);
+
+        let groupsQuery = supabase.from('course_group').select('*').order('id', { ascending: true });
+        let coursesQuery = supabase.from('courses').select('*').order('id', { ascending: true });
+
+        if (demoParam) {
+          groupsQuery = groupsQuery.eq('user_id', '00000000-0000-0000-0000-000000000000');
+          coursesQuery = coursesQuery.eq('user_id', '00000000-0000-0000-0000-000000000000');
+        }
+
+        const { data: groupsData, error: groupsErr } = await groupsQuery;
         if (groupsErr) throw groupsErr;
 
-        const { data: coursesData, error: coursesErr } = await supabase
-          .from('courses')
-          .select('*')
-          .order('id', { ascending: true });
+        const { data: coursesData, error: coursesErr } = await coursesQuery;
         if (coursesErr) throw coursesErr;
 
         setCourseGroups(groupsData || []);
@@ -81,9 +91,16 @@ export default function Home() {
     }
 
     fetchData();
-  }, []);
+  }, [router, searchParams]);
+
+  const handleAuthAction = async () => {
+    await supabase.auth.signOut();
+    router.push('/login');
+    router.refresh();
+  };
 
   const handleRenameGroup = async (id: number, newName: string) => {
+    if (isDemo) return notifyDemoBlocked();
     setCourseGroups((prev) =>
       prev.map((g) => (g.id === id ? { ...g, name: newName } : g))
     );
@@ -91,6 +108,7 @@ export default function Home() {
   };
 
   const handleRenameCourse = async (id: number, field: string, level: string) => {
+    if (isDemo) return notifyDemoBlocked();
     setCourses((prev) =>
       prev.map((c) => (c.id === id ? { ...c, field, level } : c))
     );
@@ -98,6 +116,7 @@ export default function Home() {
   };
 
   const handleCreateCourseGroup = async (name: string) => {
+    if (isDemo) return notifyDemoBlocked();
     const { data, error } = await supabase
       .from('course_group')
       .insert([{ name }])
@@ -112,6 +131,7 @@ export default function Home() {
   };
 
   const handleOpenAddCourse = (groupId: number) => {
+    if (isDemo) return notifyDemoBlocked();
     setTargetGroupId(groupId);
     setShowAddCourseDialog(true);
   };
@@ -122,18 +142,9 @@ export default function Home() {
     level: string,
     target: number
   ) => {
-    const payload = {
-      cgroup_id: cgroupId,
-      field,
-      level,
-      target,
-    };
-
-    const { data, error } = await supabase
-      .from('courses')
-      .insert([payload])
-      .select()
-      .single();
+    if (isDemo) return notifyDemoBlocked();
+    const payload = { cgroup_id: cgroupId, field, level, target };
+    const { data, error } = await supabase.from('courses').insert([payload]).select().single();
 
     if (error) {
       console.error('Error adding course:', error.message);
@@ -143,6 +154,7 @@ export default function Home() {
   };
 
   const handleConfirmDeleteGroup = async () => {
+    if (isDemo) return notifyDemoBlocked();
     if (!deletingGroup) return;
     const groupId = deletingGroup.id;
     setCourseGroups((prev) => prev.filter((g) => g.id !== groupId));
@@ -154,6 +166,7 @@ export default function Home() {
   };
 
   const handleConfirmDeleteCourse = async () => {
+    if (isDemo) return notifyDemoBlocked();
     if (!deletingCourse) return;
     const courseId = deletingCourse.id;
     setCourses((prev) => prev.filter((c) => c.id !== courseId));
@@ -169,7 +182,28 @@ export default function Home() {
 
   return (
     <main className="gt-dashboard-layout">
-      <h1 className="gt-dashboard-title">GradeTrack Dashboard</h1>
+      {/* Blocked Notification Toast */}
+      {notice && (
+        <div className="fixed top-4 right-4 z-50 p-3 bg-red-600 text-white border-2 border-black rounded-md text-xs font-extrabold shadow-lg animate-bounce">
+          {notice}
+        </div>
+      )}
+
+      {/* Main Header Row with Centered Title and Top-Right Action Button */}
+      <div className="relative flex items-center justify-between mb-6 mt-1">
+        <div className="flex-1" />
+        <h1 className="gt-dashboard-title !m-0 !text-center">GradeTrack Dashboard</h1>
+        <div className="flex-1 flex justify-end">
+          <button
+            type="button"
+            onClick={handleAuthAction}
+            className="gt-btn-cancel gt-pop-target text-xs px-3 py-1.5 font-bold text-slate-800 hover:text-red-600 hover:border-red-500"
+            title={isDemo ? 'Exit Demo Mode' : 'Sign out of GradeTrack'}
+          >
+            {isDemo ? 'Exit Demo' : 'Sign Out'}
+          </button>
+        </div>
+      </div>
 
       {courseGroups.map((group) => {
         const groupCourses = courses.filter((c) => c.cgroup_id === group.id);
@@ -182,7 +216,7 @@ export default function Home() {
               className="gt-group-title-text"
               onSave={() => {}}
               onSaveGroup={(newName) => handleRenameGroup(group.id, newName)}
-              onDelete={() => setDeletingGroup(group)}
+              onDelete={() => (isDemo ? notifyDemoBlocked() : setDeletingGroup(group))}
               titleTip="Edit semester name"
             />
 
@@ -190,7 +224,7 @@ export default function Home() {
               {groupCourses.map((course) => (
                 <Link 
                   key={course.id}
-                  href={`/course/${course.id}`} 
+                  href={`/course/${course.id}${isDemo ? '?demo=true' : ''}`} 
                   className="gt-course-card-link"
                 >
                   <div className="gt-course-card gt-pop-target">
@@ -200,7 +234,7 @@ export default function Home() {
                         mode="course"
                         className="gt-course-card-title"
                         onSave={(field, level) => handleRenameCourse(course.id, field, level)}
-                        onDelete={() => setDeletingCourse(course)}
+                        onDelete={() => (isDemo ? notifyDemoBlocked() : setDeletingCourse(course))}
                         titleTip="Edit course title"
                       />
 
@@ -216,7 +250,6 @@ export default function Home() {
                 </Link>
               ))}
 
-              {/* Minimalist Small Square "+" Button */}
               <button
                 type="button"
                 onClick={() => handleOpenAddCourse(group.id)}
@@ -230,11 +263,10 @@ export default function Home() {
         );
       })}
 
-      {/* Add Course Group Button (Centered at bottom) */}
       <div className="gt-add-course-group-wrapper">
         <button
           type="button"
-          onClick={() => setShowAddGroupDialog(true)}
+          onClick={() => (isDemo ? notifyDemoBlocked() : setShowAddGroupDialog(true))}
           className="gt-add-course-group-btn gt-pop-target"
         >
           + Add Course Group
